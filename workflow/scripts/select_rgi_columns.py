@@ -7,10 +7,11 @@ import pandas as pd
 import sys
 from pathlib import Path
 
-
 def main():
+    tool = getattr(snakemake.wildcards, 'tool', 'rgi')  # fallback safe
     # Recuperer les parametres
     input_file = snakemake.input.filtered
+    print(f"RGI Column Selection  [{tool}]")
     output_file = snakemake.output.selected
     columns_to_keep = snakemake.params.columns
     log_file = snakemake.log[0]

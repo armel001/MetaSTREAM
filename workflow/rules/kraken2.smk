@@ -9,7 +9,7 @@ rule kraken2:
         confidence = config["kraken_confidence"]
     threads: config["kraken_threads"]
     resources:
-        mem_mb = 140000 # Availablee 190 Go
+        mem_mb = 100000 # Availablee 190 Go
     conda:
         "../envs/kraken2.yaml"
     shell:

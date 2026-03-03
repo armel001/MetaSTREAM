@@ -1,3 +1,6 @@
-name: fastplong
+channels:
+  - conda-forge
+  - bioconda
+  - defaults
 dependencies:
   - fastplong

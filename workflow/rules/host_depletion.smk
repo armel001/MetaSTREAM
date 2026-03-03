@@ -10,7 +10,7 @@ rule host_depletion:
         "benchmarks/host_depletion/{sample}.txt"
     threads: 40
     resources:
-        mem_mb  = 32000,    # 32 Gb RAM pour minimap2
+        mem_mb  = 64000,    # 64 Gb RAM pour minimap2
         disk_mb = 50000     # 50 Gb espace disque temporaire
     conda:
         "../envs/host_depletion.yaml"

@@ -1,8 +1,11 @@
 rule rgi_bwt:
     input:
-        reads = "resources/reads/{sample}.renamed.fastq.gz"
+        reads = "results/{sample}/clean/{sample}.renamed.fastq.gz"
     output:
-        report_dir = directory("results/{sample}/rgi_bwt")
+        report_dir = directory("results/{sample}/rgi_bwt"),
+        txt        = "results/{sample}/rgi_bwt/{sample}.txt",          # standardisé
+        allele_txt = "results/{sample}/rgi_bwt/{sample}.allele_mapping_data.txt",
+        gene_txt   = "results/{sample}/rgi_bwt/{sample}.gene_mapping_data.txt"
     conda:
         "../envs/rgi.yaml"
     threads: 20
@@ -19,8 +22,9 @@ rule rgi_bwt:
             --threads {threads} \
             --local \
             --include_other_models \
-            -n 20 \
-            --include_wildcard \
-            --clean
-        """
+            --include_wildcard
 
+        # Normalisation : on expose gene_mapping_data comme .txt standard
+        cp {output.report_dir}/{wildcards.sample}.gene_mapping_data.txt \
+           {output.report_dir}/{wildcards.sample}.txt
+        """

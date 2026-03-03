@@ -10,6 +10,7 @@ wildcard_database_v4.0.1.fasta
 wildcard_database_v4.0.1_all.fasta
 data
 localDB/*
+results_chu_samples
 results_cmc_samples
 dag.png
 /benchmarks/*

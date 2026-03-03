@@ -4,122 +4,111 @@
 configfile: "config/config.yaml"
 
 resources_dict = {
-    "mem_mb": 188000,  # 188 Go
+    "mem_mb": 188000,
     "disk_mb": 2000000
 }
 
 ##################################################
 # RESOURCES
 ##################################################
-
 THREADS = config["resources"]["threads"]
-MEM = config["resources"]["memory"]
-#TIME = config["resources"]["time"]
+MEM     = config["resources"]["memory"]
 
 ##################################################
-# FUNCTIONS
+# WILDCARDS
 ##################################################
-# imports
-#from scripts.functions import get_absolute_time
-
+wildcard_constraints:
+    tool   = "rgi|rgi_bwt",
+    sample = "[^/]+"
 
 ##################################################
 # ENVIRONMENT
 ##################################################
-ABRICATE = config["envs"]["abricate"]
-FLYE = config["envs"]["flye"]
-PORECHOP = config["envs"]["porechop"]
-PLOT = config["envs"]["python_plot"]
-KRAKEN2 = config["envs"]["kraken2"]
-NANOPLOT = config["envs"]["nanoplot"]
-BRACKEN = config["envs"]["bracken"]
-HOST_DEP = config["envs"]["host_depletion"]
-RGI = config["envs"]["rgi"]
+ABRICATE     = config["envs"]["abricate"]
+FLYE         = config["envs"]["flye"]
+PORECHOP     = config["envs"]["porechop"]
+PLOT         = config["envs"]["python_plot"]
+KRAKEN2      = config["envs"]["kraken2"]
+NANOPLOT     = config["envs"]["nanoplot"]
+BRACKEN      = config["envs"]["bracken"]
+HOST_DEP     = config["envs"]["host_depletion"]
+RGI          = config["envs"]["rgi"]
 PYTHON_FILTER = config["envs"]["python_filter"]
 TAXO_ANALYSIS = config["envs"]["taxo_analysis"]
-R_ANALYSIS = config["envs"]["r_analysis"]
-PYTHON_VIZ = config["envs"]["python_viz"]
-###################################################
+R_ANALYSIS   = config["envs"]["r_analysis"]
+PYTHON_VIZ   = config["envs"]["python_viz"]
 
-
-############################################################
-# PARAMS #
-##########
-#SEQUENCE_LENGTH = config["params"]["treetime"]["seq_len"]
-
-#ABSOLUTE_TIME = config["params"]["absolute_time"]["date"]
-#FILE = config["params"]["absolute_time"]["file"]
-
+##################################################
+# PARAMS
+##################################################
 SAMPLES, = glob_wildcards("resources/reads/{sample_id}.fastq.gz")
-
-#MODULES = config["modules"]
-
-
 TAXONOMIC_LEVELS = ["S", "G", "F", "P"]
+
+##################################################
+# INCLUDES
 ##################################################
 
-
-# INCLUDES
-##################################################Pre-Traitement et quality
+# Pré-traitement & QC
 include: "rules/fastplong.smk"
 include: "rules/nanoplot.smk"
 include: "rules/host_depletion.smk"
 include: "rules/rename_reads.smk"
-include: "rules/extract_read_stats.smk" 
-##################################################Assemblage et Alignment 
+include: "rules/extract_read_stats.smk"
+
+# Assemblage
 include: "rules/flye_assembly.smk"
-##################################################Annotation AMR
+
+# Annotation AMR  — NB: rgi_filter/select/aggregate remplacés par rgi_preprocess
 include: "rules/rgi.smk"
 include: "rules/rgi_bwt.smk"
-include: "rules/rgi_filter.smk"
-include: "rules/rgi_select_columns.smk"
-include: "rules/rgi_aggregate.smk"
+include: "rules/rgi_preprocess.smk"   # factorise filter + select + aggregate
+include: "rules/rgi_compare.smk"
 include: "rules/r_analysis.smk"
-##################################################Analyses secondaires & visualisation
-include: "rules/reads_stats.smk"
-##################################################Reporting
 
-#################################################Taxonomic classification
+# Stats
+include: "rules/reads_stats.smk"
+
+# Taxonomie
 include: "rules/kraken2.smk"
 include: "rules/bracken.smk"
-include: "rules/taxonomy.smk" 
-#################################################SUMMARY
-include: "rules/python_visualization.smk" 
+include: "rules/taxonomy.smk"
 
+# Visualisation
+include: "rules/python_visualization.smk"
 
-# Choisir quelle stratégie exécuter
+##################################################
+# FILTERING STRATEGY
+##################################################
 FILTERING_STRATEGY = config.get("filtering_strategy")
 
 if FILTERING_STRATEGY == "standard":
-    filtering_outputs = expand("results/taxonomy/abundance_matrix_{level}_filtered.tsv", 
-                               level=TAXONOMIC_LEVELS)
+    filtering_outputs  = expand("results/taxonomy/abundance_matrix_{level}_filtered.tsv",
+                                level=TAXONOMIC_LEVELS)
     normalized_outputs = expand(
         ["results/taxonomy/abundance_matrix_{level}_relative.tsv",
          "results/taxonomy/abundance_matrix_{level}_clr.tsv"],
-        level=TAXONOMIC_LEVELS
-    )
-    diversity_output = "results/taxonomy/alpha_diversity.tsv"
-    summary_output   = "results/summary/taxonomy_summary.txt"
-    fig_genus_matrix   = "results/taxonomy/abundance_matrix_G_relative.tsv"          # ← AJOUT
-    fig_species_matrix = "results/taxonomy/abundance_matrix_S_relative.tsv"          # ← AJOUT
-    fig_alpha_div      = "results/taxonomy/alpha_diversity.tsv"                      # ← AJOUT
+        level=TAXONOMIC_LEVELS)
+    diversity_output   = "results/taxonomy/alpha_diversity.tsv"
+    summary_output     = "results/summary/taxonomy_summary.txt"
+    fig_genus_matrix   = "results/taxonomy/abundance_matrix_G_relative.tsv"
+    fig_species_matrix = "results/taxonomy/abundance_matrix_S_relative.tsv"
+    fig_alpha_div      = "results/taxonomy/alpha_diversity.tsv"
 
 elif FILTERING_STRATEGY == "independent":
-    filtering_outputs = expand("results/taxonomy/abundance_matrix_{level}_filtered_independent.tsv", 
-                               level=TAXONOMIC_LEVELS)
+    filtering_outputs  = expand("results/taxonomy/abundance_matrix_{level}_filtered_independent.tsv",
+                                level=TAXONOMIC_LEVELS)
     normalized_outputs = expand(
         ["results/taxonomy/abundance_matrix_{level}_relative_independent.tsv",
          "results/taxonomy/abundance_matrix_{level}_clr_independent.tsv"],
-        level=TAXONOMIC_LEVELS
-    )
-    diversity_output = "results/taxonomy/alpha_diversity_independent.tsv"
-    summary_output   = "results/summary/taxonomy_summary_independent.txt"
-    fig_genus_matrix   = "results/taxonomy/abundance_matrix_G_relative_independent.tsv"   # ← AJOUT
-    fig_species_matrix = "results/taxonomy/abundance_matrix_S_relative_independent.tsv"   # ← AJOUT
-    fig_alpha_div      = "results/taxonomy/alpha_diversity_independent.tsv"               # ← AJOUT
+        level=TAXONOMIC_LEVELS)
+    diversity_output   = "results/taxonomy/alpha_diversity_independent.tsv"
+    summary_output     = "results/summary/taxonomy_summary_independent.txt"
+    fig_genus_matrix   = "results/taxonomy/abundance_matrix_G_relative_independent.tsv"
+    fig_species_matrix = "results/taxonomy/abundance_matrix_S_relative_independent.tsv"
+    fig_alpha_div      = "results/taxonomy/alpha_diversity_independent.tsv"
 
 else:  # "both"
-    filtering_outputs = (
+    filtering_outputs  = (
         expand("results/taxonomy/abundance_matrix_{level}_filtered.tsv", level=TAXONOMIC_LEVELS) +
         expand("results/taxonomy/abundance_matrix_{level}_filtered_independent.tsv", level=TAXONOMIC_LEVELS)
     )
@@ -131,70 +120,100 @@ else:  # "both"
                 "results/taxonomy/abundance_matrix_{level}_clr_independent.tsv"],
                level=TAXONOMIC_LEVELS)
     )
-    diversity_output = ["results/taxonomy/alpha_diversity.tsv", 
-                        "results/taxonomy/alpha_diversity_independent.tsv"]
-    summary_output   = ["results/summary/taxonomy_summary.txt", 
-                        "results/summary/taxonomy_summary_independent.txt"]
-    fig_genus_matrix   = "results/taxonomy/abundance_matrix_G_relative_independent.tsv"   # ← déjà là
-    fig_species_matrix = "results/taxonomy/abundance_matrix_S_relative_independent.tsv"   # ← déjà là
-    fig_alpha_div      = "results/taxonomy/alpha_diversity_independent.tsv"               # ← déjà là
+    diversity_output   = ["results/taxonomy/alpha_diversity.tsv",
+                          "results/taxonomy/alpha_diversity_independent.tsv"]
+    summary_output     = ["results/summary/taxonomy_summary.txt",
+                          "results/summary/taxonomy_summary_independent.txt"]
+    fig_genus_matrix   = "results/taxonomy/abundance_matrix_G_relative_independent.tsv"
+    fig_species_matrix = "results/taxonomy/abundance_matrix_S_relative_independent.tsv"
+    fig_alpha_div      = "results/taxonomy/alpha_diversity_independent.tsv"
 
-#Include taxo figures 
 include: "rules/taxonomy_figures.smk"
 
-
+##################################################
+# CIBLES
+##################################################
 
 rule all:
+    """Pipeline complet sans RGI (QC, taxonomie, stats)."""
     input:
         # QC
-        expand("results/{sample}/qc/{sample}_Nanoplot/NanoPlot-report.html", 
-               sample=config["samples_id"]),
-        # RGI
-        expand("results/{sample}/rgi/{sample}.txt", sample=config["samples_id"]), 
-        expand("results/{sample}/rgi_preprocessing/{sample}_filtered.txt", 
-               sample=config["samples_id"]),
-        expand("results/{sample}/rgi_preprocessing/{sample}_selected.txt", 
+        expand("results/{sample}/qc/{sample}_Nanoplot/NanoPlot-report.html",
                sample=config["samples_id"]),
         # Kraken2
-        expand("results/{sample}/kraken/{sample}_output.txt", 
+        expand("results/{sample}/kraken/{sample}_output.txt",
                sample=config["samples_id"]),
         # Stats
-        expand("results/{sample}/stats/{sample}_read_stats.txt", 
+        expand("results/{sample}/stats/{sample}_read_stats.txt",
                sample=config["samples_id"]),
         "results/stats/sequencing_stats.tsv",
-        # RGI summaries
-        "results/summary/rgi_all_samples.tsv",
-        "results/summary/rgi_aggr_summary.txt",
-        # ARG analysis
-        "results/r_analysis/arg_counts.tsv",
-        "results/r_analysis/arg_matrix_normalized.tsv",
-        "results/r_analysis/drug_class_abundance.tsv",
-        "results/r_analysis/mechanism_abundance.tsv",
-        "results/r_analysis/family_abundance.tsv",
-        # Bracken multi-level
+        # Bracken
         expand("results/{sample}/bracken/{sample}_{level}.txt",
                sample=config["samples_id"], level=TAXONOMIC_LEVELS),
-        # Taxonomic matrices (combined)
-        expand("results/taxonomy/abundance_matrix_{level}.tsv", 
+        # Taxonomic matrices
+        expand("results/taxonomy/abundance_matrix_{level}.tsv",
                level=TAXONOMIC_LEVELS),
-        # Filtering (strategy-dependent)
+        # Filtering / Normalization / Diversity / Summaries
         filtering_outputs,
-        # Normalization (strategy-dependent)
         normalized_outputs,
-        # Diversity
         diversity_output,
-        # Summaries
         summary_output,
-        # ARG Visualization 
-        "results/figures/1_drug_classes_distribution.png",
-        "results/figures/ARG_Visualization_Colab.ipynb",
         # Taxonomy visualization
         "results/figures/taxonomy/composition_genus.png",
         "results/figures/taxonomy/composition_species.png",
         "results/figures/taxonomy/alpha_diversity.png",
         "results/figures/taxonomy/heatmap_species.png",
         "results/figures/taxonomy/pathogens.png",
-        
-        # Stats reads pipeline
-        "results/stats/reads_stats_all.tsv",
-        "results/stats/reads_stats_summary.txt"
+        # Clean reads
+        expand("results/{sample}/clean/{sample}.renamed.fastq.gz",
+               sample=config["samples_id"]),
+
+
+rule rgi_main_all:
+    input:
+        expand("results/{sample}/rgi/{sample}.txt",
+               sample=config["samples_id"]),
+        expand("results/{sample}/rgi_preprocessing/{sample}_filtered.txt",
+               sample=config["samples_id"]),
+        expand("results/{sample}/rgi_preprocessing/{sample}_selected.txt",
+               sample=config["samples_id"]),
+        "results/summary/rgi_all_samples.tsv",
+        "results/summary/rgi_aggr_summary.txt",
+        # r_analysis — nouveau path
+        "results/r_analysis/rgi/arg_counts.tsv",
+        "results/r_analysis/rgi/arg_matrix_normalized.tsv",
+        "results/r_analysis/rgi/drug_class_abundance.tsv",
+        "results/r_analysis/rgi/mechanism_abundance.tsv",
+        "results/r_analysis/rgi/family_abundance.tsv",
+        # Visualisation
+        "results/figures/rgi/rgi_report.html",
+
+
+rule rgi_bwt_all:
+    input:
+        expand("results/{sample}/rgi_bwt/{sample}.txt",
+               sample=config["samples_id"]),
+        expand("results/{sample}/rgi_bwt/{sample}.gene_mapping_data.txt",
+               sample=config["samples_id"]),
+        expand("results/{sample}/rgi_bwt_preprocessing/{sample}_filtered.txt",
+               sample=config["samples_id"]),
+        expand("results/{sample}/rgi_bwt_preprocessing/{sample}_selected.txt",
+               sample=config["samples_id"]),
+        "results/summary/rgi_bwt_all_samples.tsv",
+        "results/summary/rgi_bwt_aggr_summary.txt",
+        # r_analysis
+        "results/r_analysis/rgi_bwt/arg_counts.tsv",
+        "results/r_analysis/rgi_bwt/arg_matrix_normalized.tsv",
+        "results/r_analysis/rgi_bwt/drug_class_abundance.tsv",
+        "results/r_analysis/rgi_bwt/mechanism_abundance.tsv",
+        "results/r_analysis/rgi_bwt/family_abundance.tsv",
+        # Visualisation
+        "results/figures/rgi/rgi_bwt_report.html",
+
+
+rule rgi_compare_all:
+    input:
+        rules.rgi_main_all.input,
+        rules.rgi_bwt_all.input,
+        "results/summary/rgi_comparison.tsv",
+        "results/summary/rgi_comparison_report.html"

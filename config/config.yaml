@@ -29,48 +29,36 @@ envs:
 
 # MY SAMPLES
 samples_id: # choose samples to run the pipeline, available options
-#  - CMC_CLY
-#  - CMC_MNR
-#  - CMC_MTM
-#  - CMC_BKN
+  - HSE_4
+  - HSE_6
+  - HSE_2
+  - HSE_5
  # - EPU02A
  # - EPU03A
-  - HI01A
-  - HI02A
-  - HI03A
-  - HI04A
-  - HI05A
-  - HI06A
-  - HI07A 
-  - HI08A
-  - HI09B
-  - HI12B
-  - HI14B
-  - HI15B
-  - HI16B
-  - HI17B
-  - HI20B
-  - HI22B
+ # - HI01A
+ # - HI02A
+ # - HI03A
+ # - HI04A
+ # - HI05A
+ # - HI06A
+ # - HI07A 
+ # - HI08A
+ # - HI09B
+ # - HI12B
+ # - HI14B
+ # - HI15B
+ # - HI16B
+ # - HI17B
+ # - HI20B
+ # - HI22B
 
 ######################################
 # GLOBAL RESOURCES 
 ###################
 resources:
-  threads: 32
+  threads: 40
   memory: 180000  # Garde une petite marge sur tes 190 Go
   tmp_dir: "/data/armel/tmp"
-
-
-
-# Flye assembly
-# ⚠️Modifié le 2026-02-17 :
-# --meta ajouté        
-# --iterations 3       : compense Dorado fast@v4.3.0 + filtre Q10
-# Résultats différents des assemblages précédents si re-run
-flye_mode      : "--nano-raw"
-flye_iterations: 3
-flye_meta      : "--meta"
-
 
 
 
@@ -80,48 +68,52 @@ kraken_db: "/data/armel/mythesis-data/db/my_k2_db"
 
 # --- Kraaken2 Params ---
 kraken_threads: 32
-kraken_confidence: 0.1
+kraken_confidence: 0.0
 
 # --- Bracken Params ---
 
-bracken_read_len: 2500
+bracken_read_len: 3000 # 1000 2500 3000 1500
 bracken_level: "S, G, F, P"  # S=Espèce, G=Genre, F=Famille
 
 # Paramètres RGI
 rgi:
   min_identity: 80
-  min_coverage: 70
+  min_coverage: 80
   model_types:
     - "protein homolog model"
     - "protein variant model"
     - "rRNA gene variant model"
-  
-# Colomn to keep
   columns_to_keep:
-    # Identifiants
     - "orf_id"
     - "contig"
-    
-    # resistance gene
     - "best_hit_aro"
     - "aro"
-    
-    # Quality
     - "best_identities"
     - "percentage_length_of_reference_sequence"
-    
-    # Fonctionnal classification 
     - "drug_class"
     - "resistance_mechanism"
     - "amr_gene_family"
-    
-    #Others
     - "model_type"
-    # - "snps_in_best_hit_aro"
-    # - "start"
-    # - "stop"
-    # - "strand"
 
+rgi_bwt:
+  min_identity: 80
+  min_coverage: 80
+  model_types:
+    - "protein homolog model"
+    - "protein variant model"
+    - "rRNA gene variant model"
+  columns_to_keep:
+    - "aro_term"
+    - "aro_accession"
+    - "average_percent_identity"
+    - "average_percent_coverage"
+    - "all_mapped_reads"
+    - "drug_class"
+    - "resistance_mechanism"
+    - "amr_gene_family"
+    - "reference_model_type"        # équivalent de model_type
+
+   
 # Paramètres de filtrage taxonomique
 
 min_reads_per_taxon: 50      # Minimum 50 reads au total
@@ -132,7 +124,7 @@ bracken_threshold: 10
 
 
 # ============================================================================
-# NOUVEAU : FILTRAGE INDÉPENDANT (échantillons hétérogènes)
+# FILTRAGE INDÉPENDANT (échantillons hétérogènes)
 # ============================================================================
 
 # Un taxon est conservé s'il satisfait ces critères dans AU MOINS 1 échantillon
@@ -143,7 +135,7 @@ min_samples_independent: 1            # Accepter singletons robustes
 absolute_min_total_reads: 10          # Éliminer bruit absolu (<10 reads partout)
 
 #STRATEGIE DE FILTRATION
-filtering_strategy: "standard"   # "standard", "independent", ou "both"
+filtering_strategy: "independent"   # "standard", "independent", ou "both"
 
 # Figure settings
 fig_dpi: 300

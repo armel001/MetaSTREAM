@@ -9,19 +9,19 @@ rule flye_assembly:
         "logs/flye_assembly/{sample}.log"
     benchmark:
         "benchmarks/flye_assembly/{sample}.txt"
-    threads: 40
+    threads: 22
     resources:
         mem_mb = 128000
-    shadow:
-        "minimal"
     shell:
         """
         flye \
-            --nano-raw {input} \
-            --out-dir flye_outdir \
+            --nano-hq {input} \
+            --out-dir results/{wildcards.sample}/flye_tmp \
             --threads {threads} \
             --meta \
-            --iterations 3 \
-            2> {log} \
-            && cp flye_outdir/assembly.fasta {output}
+            2> {log}
+
+        mv results/{wildcards.sample}/flye_tmp/assembly.fasta {output}
+
+        rm -rf results/{wildcards.sample}/flye_tmp
         """

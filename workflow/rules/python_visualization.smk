@@ -1,25 +1,27 @@
 rule generate_arg_visualizations:
     input:
-        arg_matrix_normalized = "results/r_analysis/arg_matrix_normalized.tsv",
-        arg_matrix_counts = "results/r_analysis/arg_matrix_counts.tsv",
-        arg_matrix_presence = "results/r_analysis/arg_matrix_presence.tsv",
-        drug_class = "results/r_analysis/drug_class_abundance.tsv",
-        mechanism = "results/r_analysis/mechanism_abundance.tsv",
-        family = "results/r_analysis/family_abundance.tsv",
-        arg_counts = "results/r_analysis/arg_counts.tsv"
+        arg_matrix_normalized = "results/r_analysis/{tool}/arg_matrix_normalized.tsv",
+        arg_matrix_counts     = "results/r_analysis/{tool}/arg_matrix_counts.tsv",
+        arg_matrix_presence   = "results/r_analysis/{tool}/arg_matrix_presence.tsv",
+        drug_class            = "results/r_analysis/{tool}/drug_class_abundance.tsv",
+        mechanism             = "results/r_analysis/{tool}/mechanism_abundance.tsv",
+        family                = "results/r_analysis/{tool}/family_abundance.tsv",
+        arg_counts            = "results/r_analysis/{tool}/arg_counts.tsv",
+        family_prefix         = "results/r_analysis/{tool}/family_prefix_abundance.tsv",
+        arg_normalized = "results/r_analysis/{tool}/arg_normalized.tsv",
+        config_file           = "config/config.yaml"
     output:
-        fig1 = "results/figures/1_drug_classes_distribution.png",
-        fig2 = "results/figures/2_alpha_diversity.png",
-        fig3 = "results/figures/3_heatmap_top30.png",
-        fig4 = "results/figures/4_resistance_mechanisms.png",
-        fig5 = "results/figures/5_rarefaction_curves.png",
-        fig6 = "results/figures/6_pcoa_beta_diversity.png",
-        fig7 = "results/figures/7_top20_args.png",
-        colab_notebook = "results/figures/ARG_Visualization_Colab.ipynb"
+        report = "results/figures/rgi/{tool}_report.html"
+    params:
+        tool         = lambda w: w.tool,
+        min_identity = lambda w: config[w.tool]["min_identity"],
+        min_coverage = lambda w: config[w.tool]["min_coverage"]
     log:
-        "logs/python_visualization/generate_figures.log"
+        "logs/python_visualization/{tool}_report.log"
     conda:
         "../envs/python_viz.yaml"
+    wildcard_constraints:
+        tool = "rgi|rgi_bwt"
     threads: 1
     script:
         "../scripts/generate_arg_visualizations.py"
