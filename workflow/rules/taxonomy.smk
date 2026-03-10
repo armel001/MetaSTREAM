@@ -124,11 +124,11 @@ rule calculate_alpha_diversity:
     output:
         diversity = "results/taxonomy/alpha_diversity.tsv"
     conda:
-        "../envs/taxo_analysis.yaml"
+        "../envs/r_diversity.yaml"
     log:
         "logs/diversity/alpha_diversity.log"
     script:
-        "../scripts/alpha_diversity.py"
+        "../scripts/alpha_diversity.R"
 
 # ============================================================================
 # Alpha diversity (independent)
@@ -140,11 +140,11 @@ rule calculate_alpha_diversity_independent:
     output:
         diversity = "results/taxonomy/alpha_diversity_independent.tsv"
     conda:
-        "../envs/taxo_analysis.yaml"
+        "../envs/r_diversity.yaml"
     log:
         "logs/diversity/alpha_diversity_independent.log"
     script:
-        "../scripts/alpha_diversity.py"
+        "../scripts/alpha_diversity.R"
 
 # ============================================================================
 # Summary statistics (standard)

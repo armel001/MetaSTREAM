@@ -76,6 +76,11 @@ include: "rules/taxonomy.smk"
 # Visualisation
 include: "rules/python_visualization.smk"
 
+# Mobile Genetic Elements
+
+include: "rules/mge.smk"
+
+
 ##################################################
 # FILTERING STRATEGY
 ##################################################
@@ -130,46 +135,128 @@ else:  # "both"
 
 include: "rules/taxonomy_figures.smk"
 
-##################################################
-# CIBLES
-##################################################
 
-rule all:
-    """Pipeline complet sans RGI (QC, taxonomie, stats)."""
+# ═══════════════════════════════════════════════════════════════════════════════
+# TARGET RULES — MetagenAMR pipeline
+# ═══════════════════════════════════════════════════════════════════════════════
+
+# ─── QC module ────────────────────────────────────────────────────────────────
+
+rule quality_control:
+    """QC + stats de séquençage + clean reads."""
     input:
-        # QC
         expand("results/{sample}/qc/{sample}_Nanoplot/NanoPlot-report.html",
                sample=config["samples_id"]),
-        # Kraken2
-        expand("results/{sample}/kraken/{sample}_output.txt",
-               sample=config["samples_id"]),
-        # Stats
         expand("results/{sample}/stats/{sample}_read_stats.txt",
                sample=config["samples_id"]),
+        expand("results/{sample}/clean/{sample}.renamed.fastq.gz",
+               sample=config["samples_id"]),
         "results/stats/sequencing_stats.tsv",
-        # Bracken
+
+
+# ─── Taxonomy modules ─────────────────────────────────────────────────────────
+
+rule taxonomy_kraken:
+    """Kraken2 + Bracken + matrices d'abondance brutes."""
+    input:
+        rules.quality_control.input,
+        expand("results/{sample}/kraken/{sample}_output.txt",
+               sample=config["samples_id"]),
         expand("results/{sample}/bracken/{sample}_{level}.txt",
                sample=config["samples_id"], level=TAXONOMIC_LEVELS),
-        # Taxonomic matrices
         expand("results/taxonomy/abundance_matrix_{level}.tsv",
                level=TAXONOMIC_LEVELS),
-        # Filtering / Normalization / Diversity / Summaries
+
+
+rule taxonomy_analysis:
+    """Filtrage, normalisation, diversité alpha, summaries."""
+    input:
+        rules.taxonomy_kraken.input,
         filtering_outputs,
         normalized_outputs,
         diversity_output,
         summary_output,
-        # Taxonomy visualization
-        "results/figures/taxonomy/composition_genus.png",
-        "results/figures/taxonomy/composition_species.png",
-        "results/figures/taxonomy/alpha_diversity.png",
-        "results/figures/taxonomy/heatmap_species.png",
-        "results/figures/taxonomy/pathogens.png",
-        # Clean reads
-        expand("results/{sample}/clean/{sample}.renamed.fastq.gz",
-               sample=config["samples_id"]),
 
+
+rule taxonomy_viz:
+    """Rapport HTML de visualisation taxonomique."""
+    input:
+        rules.taxonomy_analysis.input,
+        "results/figures/taxonomy/taxonomy_report.html",
+
+
+rule taxonomy_all:
+    """Pipeline taxonomique complet : QC → Kraken → Analyse → Rapport HTML."""
+    input:
+        rules.taxonomy_viz.input,
+
+
+# ─── RGI — matrices R ─────────────────────────────────────────────────────────
+
+rule r_analysis_rgi:
+    """Matrices R — rgi main (assembly)."""
+    input:
+        "results/r_analysis/rgi/arg_counts.tsv",
+        "results/r_analysis/rgi/arg_relative.tsv",
+        "results/r_analysis/rgi/arg_normalized.tsv",
+        "results/r_analysis/rgi/arg_presence.tsv",
+        "results/r_analysis/rgi/arg_matrix_counts.tsv",
+        "results/r_analysis/rgi/arg_matrix_normalized.tsv",
+        "results/r_analysis/rgi/arg_matrix_presence.tsv",
+        "results/r_analysis/rgi/drug_class_abundance.tsv",
+        "results/r_analysis/rgi/mechanism_abundance.tsv",
+        "results/r_analysis/rgi/family_abundance.tsv",
+        "results/r_analysis/rgi/family_prefix_abundance.tsv",
+
+
+rule r_analysis_bwt:
+    """Matrices R — rgi_bwt (reads)."""
+    input:
+        "results/r_analysis/rgi_bwt/arg_counts.tsv",
+        "results/r_analysis/rgi_bwt/arg_relative.tsv",
+        "results/r_analysis/rgi_bwt/arg_normalized.tsv",
+        "results/r_analysis/rgi_bwt/arg_presence.tsv",
+        "results/r_analysis/rgi_bwt/arg_matrix_counts.tsv",
+        "results/r_analysis/rgi_bwt/arg_matrix_normalized.tsv",
+        "results/r_analysis/rgi_bwt/arg_matrix_presence.tsv",
+        "results/r_analysis/rgi_bwt/drug_class_abundance.tsv",
+        "results/r_analysis/rgi_bwt/mechanism_abundance.tsv",
+        "results/r_analysis/rgi_bwt/family_abundance.tsv",
+        "results/r_analysis/rgi_bwt/family_prefix_abundance.tsv",
+
+
+rule r_analysis_all:
+    """Matrices R pour les deux outils."""
+    input:
+        rules.r_analysis_rgi.input,
+        rules.r_analysis_bwt.input,
+
+
+# ─── RGI — visualisation ──────────────────────────────────────────────────────
+
+rule viz_rgi:
+    """Rapport HTML — rgi main."""
+    input:
+        "results/figures/rgi/rgi_report.html",
+
+
+rule viz_bwt:
+    """Rapport HTML — rgi_bwt."""
+    input:
+        "results/figures/rgi/rgi_bwt_report.html",
+
+
+rule viz_all:
+    """Rapports HTML pour les deux outils."""
+    input:
+        rules.viz_rgi.input,
+        rules.viz_bwt.input,
+
+
+# ─── RGI — pipelines complets ─────────────────────────────────────────────────
 
 rule rgi_main_all:
+    """Pipeline RGI assembly complet : détection → matrices R → rapport HTML."""
     input:
         expand("results/{sample}/rgi/{sample}.txt",
                sample=config["samples_id"]),
@@ -179,17 +266,12 @@ rule rgi_main_all:
                sample=config["samples_id"]),
         "results/summary/rgi_all_samples.tsv",
         "results/summary/rgi_aggr_summary.txt",
-        # r_analysis — nouveau path
-        "results/r_analysis/rgi/arg_counts.tsv",
-        "results/r_analysis/rgi/arg_matrix_normalized.tsv",
-        "results/r_analysis/rgi/drug_class_abundance.tsv",
-        "results/r_analysis/rgi/mechanism_abundance.tsv",
-        "results/r_analysis/rgi/family_abundance.tsv",
-        # Visualisation
-        "results/figures/rgi/rgi_report.html",
+        rules.r_analysis_rgi.input,
+        rules.viz_rgi.input,
 
 
 rule rgi_bwt_all:
+    """Pipeline RGI BWT complet : détection → matrices R → rapport HTML."""
     input:
         expand("results/{sample}/rgi_bwt/{sample}.txt",
                sample=config["samples_id"]),
@@ -201,19 +283,40 @@ rule rgi_bwt_all:
                sample=config["samples_id"]),
         "results/summary/rgi_bwt_all_samples.tsv",
         "results/summary/rgi_bwt_aggr_summary.txt",
-        # r_analysis
-        "results/r_analysis/rgi_bwt/arg_counts.tsv",
-        "results/r_analysis/rgi_bwt/arg_matrix_normalized.tsv",
-        "results/r_analysis/rgi_bwt/drug_class_abundance.tsv",
-        "results/r_analysis/rgi_bwt/mechanism_abundance.tsv",
-        "results/r_analysis/rgi_bwt/family_abundance.tsv",
-        # Visualisation
-        "results/figures/rgi/rgi_bwt_report.html",
+        rules.r_analysis_bwt.input,
+        rules.viz_bwt.input,
 
 
 rule rgi_compare_all:
+    """Comparaison RGI main vs BWT + rapport comparatif."""
     input:
         rules.rgi_main_all.input,
         rules.rgi_bwt_all.input,
         "results/summary/rgi_comparison.tsv",
-        "results/summary/rgi_comparison_report.html"
+        "results/summary/rgi_comparison_report.html",
+
+
+# ─── MGE ──────────────────────────────────────────────────────────────────────
+
+rule mge_all:
+    """Run complete MGE pipeline : detection → aggregation → R analysis → report."""
+    input:
+        expand(
+            "results/{sample}/mge/assembly.fasta.summary.csv",
+            sample=config["samples_id"]
+        ),
+        "results/summary/mge_all_samples.tsv",
+        "results/summary/mge_per_sample.tsv",
+        rules.mge_r_analysis.output,
+        "results/figures/mge/mge_report.html",
+
+
+# ─── Pipeline global ──────────────────────────────────────────────────────────
+
+rule all:
+    """Pipeline complet : taxonomie + RGI main + RGI BWT + MGE."""
+    input:
+        rules.taxonomy_all.input,
+        rules.rgi_compare_all.input,
+        rules.mge_all.input,
+

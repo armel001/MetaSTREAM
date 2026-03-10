@@ -1,0 +1,11 @@
+name: r_diversity
+channels:
+  - conda-forge
+  - bioconda
+  - defaults
+
+dependencies:
+  - r-base=4.3
+  - r-tidyverse=2.0.0
+  - bioconductor-phyloseq=1.44.0
+  - r-vegan=2.6_4

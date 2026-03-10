@@ -68,7 +68,7 @@ kraken_db: "/data/armel/mythesis-data/db/my_k2_db"
 
 # --- Kraaken2 Params ---
 kraken_threads: 32
-kraken_confidence: 0.0
+kraken_confidence: 0.1
 
 # --- Bracken Params ---
 
@@ -151,3 +151,13 @@ priority_pathogens:
   - "Clostridium perfringens"
   - "Acinetobacter baumannii"
   - "Enterococcus faecium"
+
+
+mobileog:
+  db: "/data/armel/mythesis-data/db/mobileOG-db/mobileOG-db-beatrix-1.6.dmnd"
+  metadata: "/data/armel/mythesis-data/db/mobileOG-db/mobileOG-db-beatrix-1.6-All.csv"
+  kyanite_py: "/data/armel/mythesis-data/db/mobileOG-db/mobileOG-pl/mobileOGs-pl-kyanite.py"
+  k: 15
+  evalue: 1e-20
+  min_identity: 90
+  min_coverage: 90

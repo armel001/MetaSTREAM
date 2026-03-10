@@ -1,0 +1,12 @@
+name: mobileog
+channels:
+  - conda-forge
+  - bioconda
+  - anaconda
+  - defaults
+dependencies:
+  - python=3.6.15
+  - biopython
+  - prodigal
+  - diamond>=0.9.24
+  - pandas
