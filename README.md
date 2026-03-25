@@ -36,11 +36,11 @@
 MetagenAMR is a reproducible, end-to-end Snakemake pipeline integrating quality control, taxonomic profiling, resistome and mobilome analysis from Oxford Nanopore shotgun metagenomics data. It produces publication-ready figures and structured output matrices suitable for downstream statistical analysis.
 
 **Key features:**
-- 🔬 Long-read aware normalization (copies/Gb using per-sample mean read length)
-- 🧫 Dual ARG detection strategy — assembly-based (RGI main) and read-based (RGI BWT)
+- Long-read aware normalization (copies/Gb using per-sample mean read length)
+- Dual ARG detection strategy — assembly-based (RGI main) and read-based (RGI BWT)
 - Contig-level ARG × MGE co-localization analysis
-- 📊 Automated HTML reports for all analytical modules
-- ♻️ Fully reproducible via Conda environments per rule
+- Automated HTML reports for all analytical modules
+- Fully reproducible via Conda environments per rule
 
 ---
 
@@ -226,7 +226,7 @@ results/
 
 If you use MetagenAMR in your research, please cite:
 
-> Gnimadi TAC et al. (2026) *Long-read metagenomics characterizes the resistome, mobilome, and microbial communities in wastewater from secondary-care hospitals in Conakry, Guinea.* Manuscript in preparation.
+> Gnimadi TAC et al. (2026) Manuscript in preparation.
 
 **Please also cite key dependencies:**
 
