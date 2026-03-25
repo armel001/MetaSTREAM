@@ -80,6 +80,9 @@ include: "rules/python_visualization.smk"
 
 include: "rules/mge.smk"
 
+# co-occurence 
+
+include: "rules/cooccurrence.smk"
 
 ##################################################
 # FILTERING STRATEGY
@@ -319,4 +322,4 @@ rule all:
         rules.taxonomy_all.input,
         rules.rgi_compare_all.input,
         rules.mge_all.input,
-
+        rules.cooccurrence_all.input,

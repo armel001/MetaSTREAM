@@ -57,7 +57,7 @@ Available targets:
 
   ── MGE ───────────────────────────────────────────────────────────────────────
   mge_all             Détection des éléments génétiques mobiles (mobileOG-db)
-
+  cooccurrence_all
 Examples:
   $(basename "$0")                           # Pipeline complet (all)
   $(basename "$0") -t taxonomy_all           # Taxonomie uniquement
@@ -92,6 +92,7 @@ VALID_TARGETS=(
     "taxonomy_analysis"
     "taxonomy_viz"
     "taxonomy_all"
+    "cooccurrence_all"
     # Global
     "all"
     # R analysis
@@ -108,6 +109,8 @@ VALID_TARGETS=(
     "rgi_compare_all"
     # MGE
     "mge_all"
+    #Co-ocurrence
+    "cooccurrence_all"
 )
 VALID=false
 for t in "${VALID_TARGETS[@]}"; do
