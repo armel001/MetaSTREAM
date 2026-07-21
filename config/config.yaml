@@ -26,31 +26,46 @@ envs:
   taxo_analysis: "envs/taxo_analysis.yaml"
   r_analysis: "envs/r_analysis.yaml"
   python_viz: "envs/python_viz.yaml"
-
+  plasmidfinder: "envs/plasmidfinder.yaml" 
 # MY SAMPLES
 samples_id: # choose samples to run the pipeline, available options
-  - HSE_4
-  - HSE_6
-  - HSE_2
-  - HSE_5
- # - EPU02A
- # - EPU03A
- # - HI01A
- # - HI02A
- # - HI03A
- # - HI04A
- # - HI05A
- # - HI06A
- # - HI07A 
- # - HI08A
- # - HI09B
- # - HI12B
- # - HI14B
- # - HI15B
- # - HI16B
- # - HI17B
- # - HI20B
- # - HI22B
+ # - HSE_4
+ # - HSE_6
+ # - HSE_2
+ # - HSE_5
+  #- EPU02A
+  #- EPU03A
+  #- HI01A
+  #- HI02A
+  #- HI03A
+  #- HI04A
+  #- HI05A
+  #- HI06A
+  #- HI07A 
+  #- HI08A
+  #- HI09B
+  #- HI12B
+  #- HI14B
+  #- HI15B
+  #- HI16B
+  #- HI17B
+  #- HI20B
+  #- HI22B
+  - H3_R
+  - H4_R
+  - H2_R
+  - H1_R
+  - H2_D
+  - H4_D
+  - H3_D
+  - C1
+  - C2
+  - C3
+  - C4
+  - C5
+  - C6
+  - C7
+  - C8
 
 ######################################
 # GLOBAL RESOURCES 
@@ -161,3 +176,21 @@ mobileog:
   evalue: 1e-20
   min_identity: 90
   min_coverage: 90
+
+
+medaka_model: "r1041_e82_400bps_hac_v5.2.0"
+
+
+# ─── PlasmidFinder ────────────────────────────────────────────────────────────
+
+
+plasmidfinder:
+  db: "/data/armel/mythesis-data/db/plasmidfinder_db"
+  databases: "enterobacteriales,Inc18,NT_Rep,Rep1,Rep2,Rep3,RepA_N,RepL,Rep_trans"
+  method_path: "blastn"
+  min_cov: 0.60
+  threshold: 0.95
+
+icefinder2:
+  install_dir: "/data/armel/mythesis-data/tools/icefinder2"
+  mode: "Metagenome"

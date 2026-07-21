@@ -64,6 +64,56 @@ if (!col_aro %in% colnames(rgi_all)) {
        "Available: ", paste(colnames(rgi_all), collapse = ", "))
 }
 
+# ─── 1b. Reference model filtering (RGI BWT only) ────────────────────────────
+#
+# RGI BWT maps reads against CARD reference sequences using several model
+# types: protein homolog model, protein variant model, rRNA gene variant
+# model, and protein overexpression model. SNP-confirmation models (variant,
+# rRNA, overexpression) require precise mutation calling from read alignment,
+# which is unreliable on fragmented, non-assembled metagenomic reads —
+# especially with Nanopore error profiles. The CARD/RGI documentation
+# recommends restricting BWT-based analyses to "protein homolog model" hits
+# for metagenomic short/long-read data lacking high-quality assemblies.
+# This filter is applied defensively even when the current dataset already
+# satisfies it, to ensure robustness against future CARD updates or new
+# samples introducing SNP-based model hits.
+
+if (tool == "rgi_bwt") {
+  cat("\n[1b/8] Filtering RGI BWT hits by reference model type...\n")
+
+  col_model <- "reference_model_type"
+
+  if (!col_model %in% colnames(rgi_all)) {
+    stop("ERROR: column '", col_model, "' not found in RGI BWT input. ",
+         "Available: ", paste(colnames(rgi_all), collapse = ", "))
+  }
+
+  n_before <- nrow(rgi_all)
+  model_counts_before <- rgi_all %>% count(.data[[col_model]], name = "n")
+
+  cat("  Reference model types found (before filtering):\n")
+  for (i in seq_len(nrow(model_counts_before))) {
+    cat(sprintf("    %-30s : %d rows\n",
+                model_counts_before[[col_model]][i],
+                model_counts_before$n[i]))
+  }
+
+  rgi_all <- rgi_all %>%
+    filter(.data[[col_model]] == "protein homolog model")
+
+  n_after   <- nrow(rgi_all)
+  n_removed <- n_before - n_after
+
+  cat(sprintf("  ✓ Kept 'protein homolog model' hits: %d / %d rows (%.1f%%)\n",
+              n_after, n_before, 100 * n_after / n_before))
+  if (n_removed > 0) {
+    cat(sprintf("  ✓ Removed %d rows (SNP-based / non-homolog models)\n",
+                n_removed))
+  } else {
+    cat("  ✓ No rows removed — all hits were already 'protein homolog model'\n")
+  }
+}
+
 # ─── 2. Raw counts ───────────────────────────────────────────────────────────
 
 cat("\n[2/8] Computing raw counts...\n")
@@ -84,13 +134,21 @@ if (!is.null(col_reads) && col_reads %in% colnames(rgi_all)) {
     rename(best_hit_aro = !!sym(col_aro))
 }
 
-# Joindre drug_class
+# Joindre drug_class — fusionner les valeurs multiples par (sample_id,
+# best_hit_aro) AVANT la jointure. Nécessaire car un renommage manuel de gène
+# peut fusionner plusieurs entrées CARD d'origine ayant des drug_class
+# différents ; sans cette fusion, distinct() produirait des clés dupliquées
+# côté drug_lookup, et le left_join ferait un fan-out qui casse pivot_wider
+# en aval (colonne count basculant en liste au lieu de numérique).
 if (col_drug %in% colnames(rgi_all)) {
   drug_lookup <- rgi_all %>%
     select(sample_id,
            best_hit_aro = !!sym(col_aro),
            drug_class   = !!sym(col_drug)) %>%
-    distinct()
+    distinct() %>%
+    group_by(sample_id, best_hit_aro) %>%
+    summarise(drug_class = paste(sort(unique(drug_class)), collapse = "; "),
+              .groups = "drop")
 
   arg_counts <- arg_counts %>%
     left_join(drug_lookup, by = c("sample_id", "best_hit_aro"))
@@ -259,81 +317,185 @@ if (col_family %in% colnames(rgi_all)) {
   write_tsv(tibble(), output_family)
 }
 
-# ─── 8. Family prefix aggregation ────────────────────────────────────────────
+# ─── 8. Family prefix aggregation (literature-standard short labels) ────────
+#
+# Replaces heuristic regex-parsing of the ARO gene name (best_hit_aro), which
+# was unreliable: species-prefixed gene names (e.g. "Klebsiella pneumoniae
+# KpnE") were misparsed as bacterial genus names, and case-sensitive matching
+# fragmented single families across multiple labels (e.g. ErmF/ErmB/ErmX vs
+# "erm" in the known-prefix list).
+#
+# Instead, this maps directly from the official CARD `amr_gene_family`
+# classification — which is assigned independently of how the ARO term is
+# phrased — to a standardized short label matching common usage in the AMR
+# literature (e.g. blaTEM, blaOXA, qnr, sul, dfr, tet, erm, mph, AAC, ANT,
+# APH, RND efflux, MFS efflux...).
 
-cat("\n[8/8] Creating family prefix aggregation...\n")
+cat("\n[8/8] Creating family prefix aggregation (CARD family → standard short label)...\n")
 
-# Extraire le préfixe de famille
-# CTX-M-15 → CTX-M | OXA-101 → OXA | AAC(6')-Ib7 → AAC(6')
-extract_family_prefix <- function(name) {
-  known_prefixes <- c(
-    "CTX-M", "OXA", "AAC", "ANT", "APH", "CMY", "SHV", "TEM",
-    "NDM", "KPC", "VIM", "IMP", "GES", "PER", "VEB", "CFX",
-    "CfxA", "CfiA", "CARB", "AER", "CAE", "sul", "tet", "erm",
-    "msr", "nim", "aad", "aph", "dfr", "qnr", "mcr", "van",
-    "bla", "mph", "mef", "erm", "lnu", "vga", "eat", "sal",
-    "optrA", "cfr", "poxtA"
-  )
-  for (prefix in known_prefixes) {
-    if (startsWith(name, prefix)) {
-      return(prefix)
+# Manual mapping table — defined once, used both for mapping and for
+# unmapped-value detection below.
+card_family_manual_map <- c(
+  "aminoglycoside bifunctional resistance protein"                          = "AAC/APH bifunctional",
+  "16S rRNA methyltransferase (G1405)"                                       = "16S-RMTase",
+  "Erm 23S ribosomal RNA methyltransferase"                                  = "Erm",
+  "non-erm 23S ribosomal RNA methyltransferase (G748)"                      = "non-Erm 23S-MTase",
+  "Cfr 23S ribosomal RNA methyltransferase"                                  = "Cfr",
+  "macrolide esterase"                                                       = "Ere",
+  "macrolide phosphotransferase (MPH)"                                       = "MPH",
+  "msr-type ABC-F protein"                                                   = "Msr",
+  "lsa-type ABC-F protein"                                                   = "Lsa",
+  "lincosamide nucleotidyltransferase (LNU)"                                 = "Lnu",
+  "tetracycline inactivation enzyme"                                         = "Tet (enzymatic)",
+  "tetracycline-resistant ribosomal protection protein"                      = "Tet (RPP)",
+  "sulfonamide resistant sul"                                                = "Sul",
+  "trimethoprim resistant dihydrofolate reductase dfr"                       = "Dfr",
+  "quinolone resistance protein (qnr)"                                       = "Qnr",
+  "ATP-binding cassette (ABC) antibiotic efflux pump"                        = "ABC efflux",
+  "major facilitator superfamily (MFS) antibiotic efflux pump"               = "MFS efflux",
+  "multidrug and toxic compound extrusion (MATE) transporter"                = "MATE efflux",
+  "resistance-nodulation-cell division (RND) antibiotic efflux pump"         = "RND efflux",
+  "small multidrug resistance (SMR) antibiotic efflux pump"                  = "SMR efflux",
+  "General Bacterial Porin with reduced permeability to beta-lactams"        = "Porin (beta-lactam)",
+  "General Bacterial Porin with reduced permeability to peptide antibiotics" = "Porin (peptide)",
+  "Outer Membrane Porin (Opr)"                                               = "Opr",
+  "intrinsic colistin resistant phosphoethanolamine transferase"             = "Intrinsic PET",
+  "MCR phosphoethanolamine transferase"                                      = "MCR",
+  "pmr phosphoethanolamine transferase"                                      = "Pmr",
+  "glycopeptide resistance gene cluster"                                     = "Van cluster",
+  "Van ligase"   = "Van", "vanH" = "Van", "vanT" = "Van",
+  "vanU" = "Van", "vanW" = "Van", "vanXY" = "Van", "vanY" = "Van",
+  "defensin resistant mprF"                                                  = "MprF",
+  "Intrinsic peptide antibiotic resistant Lps"                               = "Lps",
+  "rifampin ADP-ribosyltransferase (Arr)"                                    = "Arr",
+  "rifamycin-resistant beta-subunit of RNA polymerase (rpoB)"                = "RpoB",
+  "Bleomycin resistant protein"                                              = "Ble",
+  "fosfomycin thiol transferase"                                             = "Fos",
+  "kdpDE"                                                                    = "KdpDE",
+  "methicillin resistant PBP2"                                               = "PBP2 (mecA-like)",
+  "RbpA bacterial RNA polymerase-binding protein"                            = "RbpA",
+  "streptothricin acetyltransferase (SAT)"                                   = "SAT",
+  "tunicamycin resistance protein"                                           = "TmrB",
+  "undecaprenyl pyrophosphate related proteins"                              = "UppP",
+  "chloramphenicol acetyltransferase (CAT)"                                  = "CAT",
+  "nitroimidazole reductase"                                                 = "Nim"
+)
+
+map_family_to_prefix <- function(family, manual_map = card_family_manual_map) {
+  f <- trimws(family)
+  if (is.na(f) || f == "" || f == "NA") return("Unclassified")
+
+  # Rule 1 — Beta-lactamases: "XXX[-N-like] beta-lactamase" / "Beta-lactamase"
+  if (grepl("beta-lactamase$", f, ignore.case = TRUE)) {
+    prefix <- sub("(?i)(-\\d+)?-like\\s+beta-lactamase$|\\s+beta-lactamase$",
+                  "", f, perl = TRUE)
+    prefix <- trimws(prefix)
+
+    if (tolower(prefix) == "ampc-type") return("AmpC")
+    if (nchar(prefix) == 0) return("Other beta-lactamase")
+
+    tokens <- strsplit(prefix, "\\s+")[[1]]
+    if (length(tokens) > 2) {
+      last <- tokens[length(tokens)]
+      if (last == tolower(last)) {
+        last <- paste0(toupper(substr(last, 1, 1)), substr(last, 2, nchar(last)))
+      }
+      return(last)
     }
+    return(prefix)
   }
-  # Regex générique : extraire avant le premier tiret + chiffre
-  m <- regmatches(name,
-                  regexpr("^[A-Za-z\\(\\)\\'\"]+(?:-[A-Za-z]+)?",
-                          name, perl = TRUE))
-  if (length(m) > 0 && nchar(m) > 0) {
-    return(sub("-$", "", m))
-  }
-  # Fallback : premier mot
-  return(strsplit(name, " ")[[1]][1])
+
+  # Rule 2 — Aminoglycoside-modifying enzymes: AAC/ANT/APH(...)
+  m <- regmatches(f, regexpr("^(AAC|ANT|APH)", f))
+  if (length(m) > 0 && nchar(m[1]) > 0) return(m[1])
+
+  # Rule 3 — Manual mapping table
+  if (f %in% names(manual_map)) return(unname(manual_map[f]))
+
+  # Unmapped — kept as the original CARD string, flagged below for review
+  return(f)
 }
 
-arg_counts_prefix <- arg_counts %>%
-  mutate(family_prefix = sapply(best_hit_aro, extract_family_prefix))
+# Build family_prefix_abundance from rgi_all (one row per hit), splitting
+# multi-value amr_gene_family cells exactly as in step 7, then mapping each
+# split value to its standardized short label before aggregating.
 
-# Agréger par sample + famille
-if (!is.null(col_reads) && "mapped_reads" %in% colnames(arg_counts)) {
-  family_prefix_abundance <- arg_counts_prefix %>%
-    group_by(sample_id, family_prefix) %>%
-    summarise(
-      n_variants           = n_distinct(best_hit_aro),
-      count                = sum(count),
-      mapped_reads         = sum(mapped_reads),
-      .groups = "drop"
-    ) %>%
-    left_join(sequencing_stats_gb %>% select(sample_id, total_bases_gb),
-              by = "sample_id") %>%
-    mutate(normalized_abundance = mapped_reads / total_bases_gb)
+if (col_family %in% colnames(rgi_all)) {
+
+  rgi_family_split <- rgi_all %>%
+    separate_rows(!!sym(col_family), sep = "; ") %>%
+    mutate(amr_gene_family_raw = str_trim(.data[[col_family]]),
+           family_prefix        = vapply(amr_gene_family_raw,
+                                          map_family_to_prefix,
+                                          character(1)))
+
+  if (!is.null(col_reads) && col_reads %in% colnames(rgi_family_split)) {
+    family_prefix_abundance <- rgi_family_split %>%
+      group_by(sample_id, family_prefix) %>%
+      summarise(
+        n_variants   = n_distinct(.data[[col_aro]]),
+        count        = n(),
+        mapped_reads = sum(.data[[col_reads]], na.rm = TRUE),
+        .groups = "drop"
+      ) %>%
+      left_join(sequencing_stats_gb %>% select(sample_id, total_bases_gb),
+                by = "sample_id") %>%
+      mutate(normalized_abundance = mapped_reads / total_bases_gb)
+  } else {
+    family_prefix_abundance <- rgi_family_split %>%
+      group_by(sample_id, family_prefix) %>%
+      summarise(
+        n_variants = n_distinct(.data[[col_aro]]),
+        count      = n(),
+        .groups = "drop"
+      ) %>%
+      left_join(sequencing_stats_gb %>% select(sample_id, total_bases_gb),
+                by = "sample_id") %>%
+      mutate(normalized_abundance = count / total_bases_gb)
+  }
+
+  write_tsv(family_prefix_abundance, output_family_prefix)
+
+  # Flag any family value that did not match a known rule and was returned
+  # as-is — useful to detect new CARD families introduced by updates or new
+  # samples that require adding an entry to card_family_manual_map.
+  is_betalactamase <- grepl("beta-lactamase$", rgi_family_split$amr_gene_family_raw,
+                            ignore.case = TRUE)
+  is_amino_enzyme  <- grepl("^(AAC|ANT|APH)", rgi_family_split$amr_gene_family_raw)
+  is_manual_mapped <- rgi_family_split$amr_gene_family_raw %in% names(card_family_manual_map)
+  is_na_or_empty   <- is.na(rgi_family_split$amr_gene_family_raw) |
+                       trimws(rgi_family_split$amr_gene_family_raw) %in% c("", "NA")
+
+  unmapped <- unique(rgi_family_split$amr_gene_family_raw[
+    !is_betalactamase & !is_amino_enzyme & !is_manual_mapped & !is_na_or_empty
+  ])
+
+  if (length(unmapped) > 0) {
+    cat("  ⚠ Unmapped CARD families (kept as-is, review recommended):\n")
+    for (u in unmapped) cat("    -", u, "\n")
+  } else {
+    cat("  ✓ All CARD families successfully mapped to short labels\n")
+  }
+
+  cat("  ✓ family_prefix_abundance (",
+      n_distinct(family_prefix_abundance$family_prefix), " standardized families, ",
+      nrow(family_prefix_abundance), " rows)\n", sep = "")
+
 } else {
-  family_prefix_abundance <- arg_counts_prefix %>%
-    group_by(sample_id, family_prefix) %>%
-    summarise(
-      n_variants = n_distinct(best_hit_aro),
-      count      = sum(count),
-      .groups = "drop"
-    ) %>%
-    left_join(sequencing_stats_gb %>% select(sample_id, total_bases_gb),
-              by = "sample_id") %>%
-    mutate(normalized_abundance = count / total_bases_gb)
+  cat("  ⚠ amr_gene_family not found — empty file\n")
+  write_tsv(tibble(), output_family_prefix)
 }
-
-write_tsv(family_prefix_abundance, output_family_prefix)
-cat("  ✓ family_prefix_abundance (",
-    n_distinct(family_prefix_abundance$family_prefix),
-    " families, ", nrow(family_prefix_abundance), " rows)\n", sep = "")
 
 # Preview top families
 top_fam <- family_prefix_abundance %>%
   group_by(family_prefix) %>%
   summarise(total = sum(normalized_abundance), .groups = "drop") %>%
   arrange(desc(total)) %>%
-  head(10)
+  head(15)
 
-cat("\n  Top 10 families by normalized abundance:\n")
+cat("\n  Top 15 standardized families by normalized abundance:\n")
 for (i in seq_len(nrow(top_fam))) {
-  cat(sprintf("    %2d. %-20s %.2f\n",
+  cat(sprintf("    %2d. %-25s %.2f\n",
               i, top_fam$family_prefix[i], top_fam$total[i]))
 }
 
@@ -343,6 +505,9 @@ cat("\n", rep("=", 70), "\n", sep = "")
 cat("ANALYSIS COMPLETED  [", tool, "]\n", sep = "")
 cat(rep("=", 70), "\n", sep = "")
 cat("Output directory: results/r_analysis/", tool, "/\n", sep = "")
+if (tool == "rgi_bwt") {
+  cat("  • Reference model filter   : protein homolog model only\n")
+}
 cat("  • Counts and normalization : 4 files\n")
 cat("  • Matrices                 : 4 files\n")
 cat("  • Functional aggregations  : 3 files\n")

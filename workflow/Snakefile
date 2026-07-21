@@ -37,7 +37,7 @@ PYTHON_FILTER = config["envs"]["python_filter"]
 TAXO_ANALYSIS = config["envs"]["taxo_analysis"]
 R_ANALYSIS   = config["envs"]["r_analysis"]
 PYTHON_VIZ   = config["envs"]["python_viz"]
-
+PLASMIDFINDER = config["envs"]["plasmidfinder"]
 ##################################################
 # PARAMS
 ##################################################
@@ -83,6 +83,15 @@ include: "rules/mge.smk"
 # co-occurence 
 
 include: "rules/cooccurrence.smk"
+
+# medaka 
+
+include: "rules/medaka.smk"
+
+# Plasmid Finder 
+
+include: "rules/plasmidfinder.smk"
+
 
 ##################################################
 # FILTERING STRATEGY
@@ -305,7 +314,7 @@ rule mge_all:
     """Run complete MGE pipeline : detection → aggregation → R analysis → report."""
     input:
         expand(
-            "results/{sample}/mge/assembly.fasta.summary.csv",
+            "results/{sample}/mge/{sample}.fastq.summary.csv",
             sample=config["samples_id"]
         ),
         "results/summary/mge_all_samples.tsv",
@@ -313,13 +322,32 @@ rule mge_all:
         rules.mge_r_analysis.output,
         "results/figures/mge/mge_report.html",
 
+# ─── Medaka ───────────────────────────────────────────────────────────────────
+
+rule medaka_all:
+    """Polissage Medaka de tous les assemblages Flye bruts."""
+    input:
+        expand(
+            "results/{sample}/medaka/{sample}_polished.fasta",
+            sample=config["samples_id"]
+        ),
+
+# ─── Plasmid Finder ───────────────────────────────────────────────────────────
+
+rule plasmidfinder_all:
+    """Typage des réplicons plasmidiques sur tous les assemblages polis."""
+    input:
+        expand("results/{sample}/plasmidfinder/{sample}_results_tab.tsv", sample=config["samples_id"])
+
 
 # ─── Pipeline global ──────────────────────────────────────────────────────────
 
 rule all:
-    """Pipeline complet : taxonomie + RGI main + RGI BWT + MGE."""
+    """Pipeline complet : taxonomie + Medaka + PlasmidFinder + RGI main + RGI BWT + MGE."""
     input:
         rules.taxonomy_all.input,
+        rules.medaka_all.input,
+        rules.plasmidfinder_all.input,
         rules.rgi_compare_all.input,
         rules.mge_all.input,
         rules.cooccurrence_all.input,

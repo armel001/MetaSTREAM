@@ -1,24 +1,26 @@
 #!/usr/bin/env Rscript
 # ══════════════════════════════════════════════════════════════════════════════
 # alpha_diversity.R — Indices de diversité alpha
-# Pipeline MetagenAMR | Bracken species-level abundance matrix
+# Pipeline MetagenAMR | Bracken taxonomic abundance matrix (niveau paramétrable)
 #
-# Métriques calculées via phyloseq + vegan :
-#   - Observed richness (S)
-#   - Shannon H'        (vegan::diversity, base log naturel)
-#   - Simpson 1-D       (vegan::diversity)
-#   - Simpson inverse   (vegan::diversity)
-#   - Pielou J'         (H' / ln(S))
-#   - Chao1             (vegan::estimateR, bias-corrected)
+# Métriques calculées via vegan :
+#   - Observed richness (S)   — calculée après raréfaction à profondeur commune
+#   - Shannon H'        — vegan::diversity, base log naturel — après raréfaction
+#   - Simpson 1-D       — vegan::diversity — après raréfaction
+#   - Simpson inverse   — vegan::diversity — après raréfaction
+#   - Pielou J'         — H' / ln(S) — après raréfaction
+#   - Chao1             — vegan::estimateR, bias-corrected — sur comptages COMPLETS
+#                          (l'estimateur corrige l'échantillonnage incomplet sans
+#                          nécessiter de sous-échantillonnage ; le raréfier serait
+#                          contre-productif)
 #
 # Références :
-#   McMurdie & Holmes (2013) PLoS ONE — phyloseq
 #   Oksanen et al. (2022) — vegan
+#   Willis (2019) Front. Microbiol. — Rarefaction, Alpha Diversity, and Statistics
 # ══════════════════════════════════════════════════════════════════════════════
 
 suppressPackageStartupMessages({
   library(tidyverse)
-  library(phyloseq)
   library(vegan)
 })
 
@@ -28,17 +30,20 @@ if (exists("snakemake")) {
   input_matrix <- snakemake@input$matrix
   output_file  <- snakemake@output$diversity
   log_file     <- snakemake@log[[1]]
+  level        <- if (!is.null(snakemake@params$level)) snakemake@params$level else "Taxa"
   sink(log_file, append = FALSE, split = TRUE)
 } else {
   # Mode standalone
   args         <- commandArgs(trailingOnly = TRUE)
   input_matrix <- args[1]
   output_file  <- args[2]
+  level        <- if (length(args) >= 3) args[3] else "Taxa"
 }
 
 cat("══════════════════════════════════════════════════════════════════════\n")
 cat("  ALPHA DIVERSITY — MetagenAMR\n")
 cat("══════════════════════════════════════════════════════════════════════\n")
+cat(sprintf("  Niveau : %s\n", level))
 cat(sprintf("  Input  : %s\n", input_matrix))
 cat(sprintf("  Output : %s\n", output_file))
 cat(sprintf("  Date   : %s\n\n", format(Sys.time(), "%Y-%m-%d %H:%M")))
@@ -53,36 +58,20 @@ raw <- read_tsv(input_matrix, show_col_types = FALSE)
 meta_cols   <- c("name", "taxonomy_id")
 sample_cols <- setdiff(names(raw), meta_cols)
 
-cat(sprintf("  Espèces  : %d\n", nrow(raw)))
+cat(sprintf("  %-9s: %d\n", level, nrow(raw)))
 cat(sprintf("  Samples  : %d (%s)\n", length(sample_cols),
             paste(sample_cols, collapse = ", ")))
 
-# ── Construction de l'objet phyloseq ─────────────────────────────────────────
+# ── Construction de la matrice de comptage ───────────────────────────────────
 
-cat("\n[Step 2] Construction de l'objet phyloseq...\n")
+cat("\n[Step 2] Construction de la matrice taxa × samples...\n")
 
-# OTU table : lignes = taxa, colonnes = samples
 otu_mat <- raw %>%
   select(all_of(sample_cols)) %>%
   as.matrix()
-
 rownames(otu_mat) <- raw$name
 
-# Taxonomy table
-tax_mat <- raw %>%
-  select(name) %>%
-  mutate(Species = name) %>%
-  as.data.frame()
-rownames(tax_mat) <- raw$name
-tax_mat <- tax_matrix <- as.matrix(tax_mat)
-
-# phyloseq object
-OTU  <- otu_table(otu_mat, taxa_are_rows = TRUE)
-TAX  <- tax_table(tax_mat)
-ps   <- phyloseq(OTU, TAX)
-
-cat(sprintf("  phyloseq : %d taxa × %d samples\n",
-            ntaxa(ps), nsamples(ps)))
+cat(sprintf("  Matrice  : %d taxa × %d samples\n", nrow(otu_mat), ncol(otu_mat)))
 
 # ── Calcul des indices via vegan ──────────────────────────────────────────────
 # vegan attend : lignes = samples, colonnes = taxa
@@ -92,29 +81,50 @@ cat("\n[Step 3] Calcul des indices de diversité alpha (vegan)...\n")
 # Matrice transposée pour vegan : samples × taxa
 otu_t <- t(otu_mat)
 
-# Shannon H' — base log naturel (compatible phyloseq/vegan standard)
-shannon     <- vegan::diversity(otu_t, index = "shannon")
+# Coercition entière — requise par estimateR() ; Bracken peut produire des
+# comptages non entiers (réassignation probabiliste des reads multi-mappés)
+otu_t_int <- round(otu_t)
+n_diff <- sum(abs(otu_t - otu_t_int) > 1e-6)
+if (n_diff > 0) {
+  cat(sprintf("  [AVERTISSEMENT] %d valeurs non entières détectées (Bracken) — arrondies.\n", n_diff))
+}
+
+# Diagnostic profondeur de séquençage
+depths <- rowSums(otu_t_int)
+cat(sprintf("  Profondeur   : min=%d  max=%d  ratio max/min=%.2f\n",
+            min(depths), max(depths), max(depths) / min(depths)))
+
+# Raréfaction à profondeur commune pour Shannon / Simpson / Richesse / Pielou
+# (Chao1 reste calculé sur les comptages complets — voir en-tête)
+set.seed(42)
+min_depth <- min(depths)
+otu_rare  <- vegan::rrarefy(otu_t_int, sample = min_depth)
+cat(sprintf("  Raréfaction  : %d reads (profondeur minimale observée, seed=42)\n", min_depth))
+
+# Shannon H' — base log naturel
+shannon     <- vegan::diversity(otu_rare, index = "shannon")
 
 # Simpson 1-D
-simpson     <- vegan::diversity(otu_t, index = "simpson")
+simpson     <- vegan::diversity(otu_rare, index = "simpson")
 
 # Simpson inverse (1/D)
-inv_simpson <- vegan::diversity(otu_t, index = "invsimpson")
+inv_simpson <- vegan::diversity(otu_rare, index = "invsimpson")
 
-# Richesse observée S
-richness    <- vegan::specnumber(otu_t)
+# Richesse observée S (post-raréfaction)
+richness    <- vegan::specnumber(otu_rare)
 
 # Pielou J' = H' / ln(S)
 pielou      <- ifelse(richness > 1,
                       shannon / log(richness),
                       0)
 
-# Chao1 — estimateur bias-corrected via vegan::estimateR
-chao1_res   <- vegan::estimateR(otu_t)
+# Chao1 — estimateur bias-corrected, sur comptages COMPLETS (non raréfiés)
+chao1_res   <- vegan::estimateR(otu_t_int)
 chao1       <- chao1_res["S.chao1", ]
 
-# Total reads par sample
-total_reads <- rowSums(otu_t)
+# Total reads par sample — profondeur réelle (avant raréfaction), conservée
+# pour traçabilité
+total_reads <- depths
 
 cat(sprintf("  %-12s  %6s  %7s  %7s  %7s  %7s\n",
             "Sample", "S", "H'", "1-D", "J'", "Chao1"))

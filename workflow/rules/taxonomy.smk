@@ -120,7 +120,7 @@ rule normalize_abundance_independent:
 
 rule calculate_alpha_diversity:
     input:
-        matrix = "results/taxonomy/abundance_matrix_S.tsv"
+        matrix = "results/taxonomy/abundance_matrix_G.tsv"
     output:
         diversity = "results/taxonomy/alpha_diversity.tsv"
     conda:
@@ -136,7 +136,7 @@ rule calculate_alpha_diversity:
 
 rule calculate_alpha_diversity_independent:
     input:
-        matrix = "results/taxonomy/abundance_matrix_S_filtered_independent.tsv"
+        matrix = "results/taxonomy/abundance_matrix_G_filtered_independent.tsv"
     output:
         diversity = "results/taxonomy/alpha_diversity_independent.tsv"
     conda:

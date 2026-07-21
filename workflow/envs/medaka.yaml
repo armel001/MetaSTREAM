@@ -1,3 +1,16 @@
 name: medaka
+channels:
+  - conda-forge
+  - bioconda
 dependencies:
-  - medaka
+  - python=3.10
+  - pip
+  - samtools
+  - minimap2
+  - compilers
+  - zlib
+  - bzip2
+  - xz
+  - libdeflate>=1.19
+  - pip:
+      - medaka>=2.0

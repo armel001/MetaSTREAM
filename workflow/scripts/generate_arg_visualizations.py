@@ -487,29 +487,62 @@ b64_fig6 = fig_to_b64(fig)
 plt.close(fig)
 print("  ✓ Done")
 
-# ─── Figure 7: Top 20 ARGs ────────────────────────────────────────────────────
+# --- Figure 7: Top 20 ARG Families ---
 
-print("\n[8/8] Figure 7: Top 20 ARGs...")
+print("\n[8/8] Figure 7: Top 20 ARG Families (normalized copies/Gb)...")
 
-top20 = (arg_counts_df
-         .groupby('best_hit_aro')['count']
-         .sum()
-         .nlargest(20)
-         .sort_values(ascending=True))
+family_prefix_df_fig7 = pd.read_csv(snakemake.input.family_prefix, sep='\t')
+
+top_families = (family_prefix_df_fig7
+                .groupby('family_prefix')
+                .agg(
+                    mean_norm  = ('normalized_abundance', 'mean'),
+                    total_norm = ('normalized_abundance', 'sum'),
+                    n_samples  = ('sample_id', 'nunique'),
+                    n_variants = ('n_variants', 'sum')
+                )
+                .reset_index()
+                .sort_values('mean_norm', ascending=False)
+                .head(20)
+                .sort_values('mean_norm', ascending=True))
+
+n_fam = len(top_families)
+colors_fam = [master_palette[i % len(master_palette)] for i in range(n_fam)]
 
 fig, ax = plt.subplots(figsize=(10, 8))
-colors = [master_palette[i % len(master_palette)] for i in range(len(top20))]
-ax.barh(top20.index, top20.values, color=colors, edgecolor='black', linewidth=0.7)
-ax.set_title(f"Top 20 Most Abundant ARGs — {tool_label}",
+
+bars = ax.barh(
+    top_families['family_prefix'],
+    top_families['mean_norm'],
+    color=colors_fam,
+    edgecolor='black',
+    linewidth=0.6
+)
+
+n_total_samples = family_prefix_df_fig7['sample_id'].nunique()
+for bar, (_, row) in zip(bars, top_families.iterrows()):
+    width = bar.get_width()
+    ax.text(
+        width * 1.01, bar.get_y() + bar.get_height() / 2,
+        f"{int(row['n_samples'])}/{n_total_samples}",
+        va='center', ha='left', fontsize=8, color='#555555'
+    )
+
+ax.set_title(f"Top 20 ARG Families --- {tool_label}",
              fontsize=14, pad=15, weight='bold')
-ax.set_xlabel("Number of Observations", fontsize=12, weight='bold')
+ax.set_xlabel("Mean Normalized Abundance (copies/Gb)", fontsize=12, weight='bold')
 ax.tick_params(axis='both', labelsize=10)
-ax.margins(y=0.01)
+ax.margins(y=0.01, x=0.08)
+ax.text(1.0, -0.06,
+        "n/N = prevalence (samples with >=1 hit / total samples)",
+        transform=ax.transAxes, ha='right',
+        fontsize=7.5, color='#888888', style='italic')
 sns.despine()
 plt.tight_layout()
 b64_fig7 = fig_to_b64(fig)
 plt.close(fig)
-print("  ✓ Done")
+print("  Done")
+
 
 
 

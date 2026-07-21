@@ -21,7 +21,6 @@ rule rgi_bwt:
             --output_file {output.report_dir}/{wildcards.sample} \
             --threads {threads} \
             --local \
-            --include_other_models \
             --include_wildcard
 
         # Normalisation : on expose gene_mapping_data comme .txt standard

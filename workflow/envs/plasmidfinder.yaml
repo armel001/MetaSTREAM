@@ -1,0 +1,6 @@
+name: plasmidfinder
+channels:
+  - bioconda
+  - conda-forge
+dependencies:
+  - plasmidfinder=2.1.6 

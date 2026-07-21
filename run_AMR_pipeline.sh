@@ -1,12 +1,9 @@
-#!/usr/bin/env bash
-
-################################################################################
 # AMR Pipeline for Metagenomic Analysis
 # Author       : Thibaut Armel Chérif GNIMADI
 # Affiliation  : CERFIG
 # Description  : Metagenomic analysis pipeline with Kraken2/Bracken and RGI
-# Version      : 4.0
-# Date         : 2026-03-09
+# Version      : 4.2
+# Date         : 2026-07-21
 ################################################################################
 
 set -euo pipefail
@@ -37,8 +34,16 @@ Available targets:
   taxonomy_viz        + rapport HTML taxonomique
   taxonomy_all        Pipeline taxonomique complet (= all sans RGI)
 
+  ── Medaka ─────────────────────────────────────────────────────────────────────
+  medaka_all          Polissage Medaka de tous les assemblages Flye bruts
+
+  ── PlasmidFinder ─────────────────────────────────────────────────────────────
+  plasmidfinder_all   Typage des réplicons plasmidiques (Inc groups) sur les
+                       assemblages polis Medaka (dépend de medaka_all)
+
   ── Pipeline global ───────────────────────────────────────────────────────────
-  all                 Tout : taxonomie + RGI main + RGI BWT + MGE
+  all                 Tout : taxonomie + Medaka + PlasmidFinder + RGI main
+                       + RGI BWT + MGE
 
   ── RGI — analyse R (matrices) ────────────────────────────────────────────────
   r_analysis_rgi      Matrices R — rgi main (assembly)
@@ -58,10 +63,13 @@ Available targets:
   ── MGE ───────────────────────────────────────────────────────────────────────
   mge_all             Détection des éléments génétiques mobiles (mobileOG-db)
   cooccurrence_all
+
 Examples:
   $(basename "$0")                           # Pipeline complet (all)
   $(basename "$0") -t taxonomy_all           # Taxonomie uniquement
   $(basename "$0") -t taxonomy_viz           # Juste le rapport HTML taxo
+  $(basename "$0") -t medaka_all             # Polissage Medaka uniquement
+  $(basename "$0") -t plasmidfinder_all      # Typage plasmides uniquement
   $(basename "$0") -t r_analysis_bwt         # Matrices R BWT uniquement
   $(basename "$0") -t viz_bwt                # Rapport HTML BWT uniquement
   $(basename "$0") -t rgi_bwt_all            # Pipeline BWT complet
@@ -93,6 +101,10 @@ VALID_TARGETS=(
     "taxonomy_viz"
     "taxonomy_all"
     "cooccurrence_all"
+    # Medaka
+    "medaka_all"
+    # PlasmidFinder
+    "plasmidfinder_all"
     # Global
     "all"
     # R analysis
@@ -143,9 +155,9 @@ snakemake \
     --cores "${CORES}" \
     -j 2 \
     --use-conda \
-    --rerun-triggers mtime \
+    --rerun-triggers params \
     ${DRY_RUN} \
-    -- "${TARGET}"
+    -- "${TARGET}" 
 
 echo ""
 echo "======================================"
