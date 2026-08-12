@@ -16,22 +16,23 @@
 
 ---
 
-## 📋 Table of Contents
+## Table of Contents
 
-- [Overview](#-overview)
-- [Pipeline Workflow](#-pipeline-workflow)
-- [Requirements](#-requirements)
-- [Installation](#-installation)
-- [Configuration](#-configuration)
-- [Usage](#-usage)
-- [Outputs](#-outputs)
-- [Tools & Dependencies](#-tools--dependencies)
-- [Citation](#-citation)
-- [License](#-license)
+- [Overview](#overview)
+- [Pipeline Workflow](#pipeline-workflow)
+- [Requirements](#requirements)
+- [Installation](#installation)
+- [Configuration](#configuration)
+- [Quick Test](#quick-test)
+- [Usage](#usage)
+- [Outputs](#outputs)
+- [Related Projects](#related-projects)
+- [Citation](#citation)
+- [License](#license)
 
 ---
 
-## 🔭 Overview
+## Overview
 
 MetagenAMR is a reproducible, end-to-end Snakemake pipeline integrating quality control, taxonomic profiling, resistome and mobilome analysis from Oxford Nanopore shotgun metagenomics data. It produces publication-ready figures and structured output matrices suitable for downstream statistical analysis.
 
@@ -44,31 +45,17 @@ MetagenAMR is a reproducible, end-to-end Snakemake pipeline integrating quality 
 
 ---
 
-## 🔄 Pipeline Workflow
+## Pipeline Workflow
 
 ```
- ┌─────────────────────────────────────────────────────────────────┐
- │                                                                 │
- │   Raw reads (.fastq.gz)                                         │
- │        │                                                        │
- │        ▼                                                        │
- │   ┌─────────────┐   ┌──────────────┐   ┌──────────────────┐   │
- │   │  01 · QC &  │──▶│ 02 · Taxo-  │──▶│  03 · Resistome  │   │
- │   │  Assembly   │   │    nomy      │   │      (RGI)       │   │
- │   └─────────────┘   └──────────────┘   └──────────────────┘   │
- │                                                  │              │
- │                                                  ▼              │
- │                        ┌──────────────┐   ┌──────────────┐    │
- │                        │  05 · Reports│◀──│ 04 · Mobilome│    │
- │                        │  & Matrices  │   │    (MGE)     │    │
- │                        └──────────────┘   └──────────────┘    │
- │                                                                 │
- └─────────────────────────────────────────────────────────────────┘
+Raw reads ─▶ QC & Assembly ─▶ Taxonomy ─▶ Resistome (RGI) ─┐
+                                                             ├─▶ Reports & Matrices
+                                          Mobilome (MGE) ────┘
 ```
 
 ---
 
-## ⚙️ Requirements
+## Requirements
 
 | Requirement | Version | Notes |
 |---|---|---|
@@ -84,173 +71,86 @@ conda install -n base -c conda-forge snakemake mamba
 
 ---
 
-## 📦 Installation
+## Installation
 
 ```bash
-git clone https://github.com/your-repo/MetagenAMR.git
+git clone https://github.com/armel001/MetagenAMR.git
 cd MetagenAMR
 ```
 
 All tool environments are automatically built by Snakemake via `--use-conda` — no manual installation required.
 
----
-
-## 🔧 Configuration
-
-Edit `config/config.yaml`:
-
-```yaml
-# ── Samples ────────────────────────────────────────
-samples_id:
-  - HSE_2
-  - HSE_4
-  - HSE_5
-  - HSE_6
-
-# ── Input ──────────────────────────────────────────
-reads_dir: "data/reads"          # {reads_dir}/{sample}/{sample}.fastq.gz
-
-# ── Reference databases ────────────────────────────
-kraken2_db:   "/path/to/kraken2_db"
-host_genome:  "/path/to/human_genome.fa"
-card_db:      "/path/to/card_db"
-mobileog_db:  "/path/to/mobileOG-db_beatrix-1.6"
-
-# ── Output settings ────────────────────────────────
-fig_dpi:          300
-mge_min_pident:    90
-mge_min_cov:       90
-```
+**Databases.** MetagenAMR relies on external reference databases (Kraken2, CARD/RGI, mobileOG-db, PlasmidFinder, a host reference genome) that are not distributed with the repository — they must be downloaded and placed under `resources/` following the layout described in the project documentation. Large databases can be symlinked rather than copied.
 
 ---
 
-## 🚀 Usage
+## Configuration
+
+Pipeline behaviour is controlled by `config/config.yaml` (samples, scientific parameters, database paths). Two optional overlays:
+- `config/config.local.yaml` — machine-specific settings (never committed).
+- `config/config.test.yaml` — runs the pipeline on the small bundled test dataset (see below).
 
 ```bash
-# Complete pipeline
-bash run_AMR_pipeline.sh
+snakemake --configfile config/config.yaml config/config.local.yaml -n
+```
 
-# Specific target
+---
+
+## Quick Test
+
+A small bundled dataset lets you validate the installation end-to-end without real samples:
+
+```bash
+cp resources/data_test/*.fastq.gz resources/reads/
+snakemake --configfile config/config.yaml config/config.test.yaml --use-conda -n
+```
+
+This is a technical smoke test (confirms the pipeline runs), not a biological validation.
+
+---
+
+## Usage
+
+```bash
+bash run_AMR_pipeline.sh          # complete pipeline
 bash run_AMR_pipeline.sh -t <target>
-
-# Dry-run (preview jobs)
-bash run_AMR_pipeline.sh -n
-
-# Custom cores
-bash run_AMR_pipeline.sh -t taxonomy_all -c 16
+bash run_AMR_pipeline.sh -n       # dry-run
 ```
 
-### Available targets
+Main targets: `taxonomy_all`, `rgi_main_all`, `rgi_bwt_all`, `mge_all`, `cooccurrence_all`, and `all` (complete pipeline). Run `snakemake --list` for the exhaustive list of rules.
 
-| Target | Module | Description |
-|---|---|---|
-| `quality_control` | QC | Host depletion, filtering, assembly, QC metrics |
-| `taxonomy_kraken` | Taxonomy | Kraken2 + Bracken classification |
-| `taxonomy_analysis` | Taxonomy | Filtering, normalization, alpha diversity |
-| `taxonomy_viz` | Taxonomy | HTML report |
-| `taxonomy_all` | Taxonomy | Complete taxonomy module |
-| `rgi_main_all` | Resistome | ARG detection (assembly) + matrices + report |
-| `rgi_bwt_all` | Resistome | ARG detection (reads) + matrices + report |
-| `rgi_compare_all` | Resistome | RGI main vs BWT comparison |
-| `mge_all` | Mobilome | MGE detection + R analysis + report |
-| `cooccurrence_all` | Co-occurrence | ARG × MGE contig-level co-localization |
-| `all` | Full | Complete pipeline |
+**Note on Medaka polishing:** requires a GPU. If unavailable locally, polishing can be run on a remote GPU server and results copied back into `results/{sample}/medaka/` — see project documentation.
 
 ---
 
-## 📁 Outputs
+## Outputs
 
-```
-results/
-├── {sample}/
-│   ├── qc/                      # NanoPlot QC reports
-│   ├── assembly/                # Flye assembled contigs
-│   ├── rgi/                     # RGI main hits (.txt)
-│   ├── rgi_bwt/                 # RGI BWT hits
-│   └── mge/                     # mobileOG hits (.csv)
-│
-├── taxonomy/                    # Bracken matrices (S/G/F/O/C/P)
-│   ├── abundance_matrix_S.tsv   # Species-level counts
-│   ├── alpha_diversity.tsv      # Shannon, Simpson, Chao1, Pielou
-│   └── ...
-│
-├── r_analysis/
-│   ├── rgi/                     # ARG normalized matrices (11 files)
-│   ├── rgi_bwt/                 # ARG BWT matrices
-│   ├── mge/                     # MGE normalized matrices (5 files)
-│   └── cooccurrence/            # ARG × MGE co-occurrence (4 files)
-│
-├── figures/
-│   ├── taxonomy/taxonomy_report.html
-│   ├── rgi/viz_rgi.html
-│   ├── mge/mge_report.html
-│   └── cooccurrence/cooccurrence_report.html
-│
-└── stats/
-    └── sequencing_stats.tsv     # Per-sample QC summary table
-```
+Per-sample results under `results/{sample}/` (QC, assembly, RGI, MGE hits); pooled matrices under `results/r_analysis/`; HTML reports under `results/figures/`. Full output map: see project documentation.
 
 ---
 
-## 🛠 Tools & Dependencies
+## Related Projects
 
-### Bioinformatics tools
-
-| Tool | Version | Usage | Reference |
-|---|---|---|---|
-| NanoPlot | ≥ 1.40 | QC metrics & read stats | De Coster et al. 2018 |
-| Minimap2 | ≥ 2.24 | Host read depletion | Li 2018 |
-| fastp-long | ≥ 0.23 | Adapter trimming & QC | Chen et al. 2018 |
-| Flye | ≥ 2.9 | De novo assembly | Kolmogorov et al. 2019 |
-| Kraken2 | ≥ 2.1 | Taxonomic classification | Wood et al. 2019 |
-| Bracken | ≥ 2.7 | Abundance re-estimation | Lu et al. 2017 |
-| RGI / CARD | ≥ 6.0 | ARG detection | Alcock et al. 2023 |
-| DIAMOND | ≥ 2.1 | MGE alignment | Buchfink et al. 2021 |
-| Prodigal | ≥ 2.6 | ORF prediction | Hyatt et al. 2010 |
-| mobileOG-db | beatrix-1.6 | MGE database | Dong et al. 2022 |
-
-### R & Python packages
-
-| Package | Usage |
-|---|---|
-| `phyloseq` v1.44 | Alpha diversity framework |
-| `vegan` v2.6-4 | Diversity indices (Shannon, Simpson, Chao1, Pielou) |
-| `tidyverse` | Data wrangling |
-| `pandas` / `numpy` | Matrix processing |
-| `matplotlib` / `seaborn` | Figure generation |
-| `scikit-learn` | CLR + PCA (beta diversity) |
+- **MAG_pipeline** — companion pipeline for metagenome-assembled genome (MAG) reconstruction and quality assessment, developed for the same study. *Repository coming soon.*
 
 ---
 
-## 📖 Citation
+## Citation
 
 If you use MetagenAMR in your research, please cite:
 
 > Gnimadi TAC et al. (2026) Manuscript in preparation.
 
-**Please also cite key dependencies:**
-
-```
-McMurdie & Holmes (2013) phyloseq. PLoS ONE 8(4):e61217
-Oksanen et al. (2022) vegan: Community Ecology Package. R package v2.6-4
-Alcock et al. (2023) CARD. Nucleic Acids Research 51(D1):D690–D699
-Dong et al. (2022) mobileOG-db. Applied and Environmental Microbiology
-Kolmogorov et al. (2019) Flye. Nature Biotechnology 37:540–546
-McMurdie & Holmes (2014) Waste not, want not. PLoS Comput Biol 10(4):e1003531
-```
+Built on Snakemake, NanoPlot, Minimap2, fastplong, Flye, Kraken2/Bracken, RGI/CARD, DIAMOND + mobileOG-db, and PlasmidFinder — please also cite these dependencies where relevant. Full versions and citations: see project documentation.
 
 ---
 
-## 📄 License
+## License
 
-```
-MIT License — Copyright (c) 2026 Thibaut Armel Chérif GNIMADI et al.
-```
-
-See [LICENSE](LICENSE) for full terms.
+MIT License — Copyright (c) 2026 Thibaut Armel Chérif GNIMADI et al. See [LICENSE](LICENSE) for full terms.
 
 ---
 
 <div align="center">
-<sub>MetagenAMR · Snakemake · Conda · Nanopore R10.4 · CARD · mobileOG-db beatrix-1.6</sub>
+<sub>MetagenAMR · Snakemake · Conda · Nanopore R10.4</sub>
 </div>

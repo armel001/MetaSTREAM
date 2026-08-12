@@ -1,48 +1,72 @@
-# To ignore Resources 
+# =============================================================================
+# Resources — machine/study-specific content, populated after cloning
+# =============================================================================
 /results/*
-/documentations/*
+/documentation/*
 /resources/*
+
+# --- Exceptions: keep directory structure (.gitkeep) and the bundled test set
+!/resources/reads/.gitkeep
+!/resources/genomes/host_depletion/.gitkeep
+!/resources/db/kraken2_standard/.gitkeep
+!/resources/db/card/.gitkeep
+!/resources/db/mobileOG-db/.gitkeep
+!/resources/db/plasmidfinder_db/.gitkeep
+!/resources/tools/mobileOG-pl/.gitkeep
+!/resources/data_test/
+!/resources/data_test/**
+
+# --- RGI / CARD — deposited at repo root by `rgi load --local` (not redirected)
 card*
 wildcard/*
 wildcard_annotation.log
 wildcard_data.tar.bz2
 wildcard_database_v4.0.1.fasta
 wildcard_database_v4.0.1_all.fasta
-data
 localDB/*
-results_chu_samples
-results_cmc_samples
+
+# --- Legacy / to confirm still relevant
+data
+old_p1_results
+
 dag.png
 /benchmarks/*
-# -------------------------------
-# Snakemake cache and metadata
-# -------------------------------
-.snakemake/
-!/.snakemake/logs/  # (optionnel : tu peux garder les logs si tu veux les suivre)
-!/.snakemake/config/ # idem
 
-# Snakemake temp/intermediate results
+# =============================================================================
+# Local, machine-specific configuration — NEVER commit
+# =============================================================================
+config/config.local.yaml
+
+# =============================================================================
+# Snakemake cache and metadata
+# =============================================================================
+.snakemake/
+!/.snakemake/logs/   # optional: keep run logs under version control if desired
+!/.snakemake/config/ # optional: keep resolved config snapshots if desired
+
 .snakemake_timestamp
 .snakemake_metadata.json
 
+# =============================================================================
+# Raw sequencing data — safety net beyond /resources/*
+# =============================================================================
+*.fastq.gz
+!resources/data_test/*.fastq.gz
+*.fastq
 
-# -------------------------------
-# Conda environments & temporary files
-# -------------------------------
-.snakemake/conda/*
-.snakemake/scripts/*
-.snakemake/metadata/*
-.snakemake/log/*
-.snakemake/tmp/*
-.snakemake/shadow/*
-.snakemake/locks/*
-.snakemake/.lock
+# =============================================================================
+# OS / editor artifacts
+# =============================================================================
+.DS_Store
+*.swp
+*.save
 
-
+# =============================================================================
+# Generic logs / temp / cache
+# =============================================================================
 logs/
 tmp/
 .cache/
-.log
-.tmp
-.bak
-.snakemake/
+*.log
+*.tmp
+*.bak

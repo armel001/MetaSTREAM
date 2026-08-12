@@ -1,3 +1,0 @@
-name: bcftools
-dependencies:
-  - bcftools

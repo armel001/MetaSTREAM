@@ -1,7 +1,0 @@
-channels:
-  - conda-forge
-  - nanoporetech
-  - bioconda
-
-dependencies:
-  - medaka=2.2.2

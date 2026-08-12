@@ -1,96 +1,96 @@
 ---
-# MODULES
+# =============================================================================
+# MetagenAMR — Pipeline configuration
+# =============================================================================
+# This file contains all scientific parameters and default database paths.
+# It is versioned and safe to publish.
+#
+# Database/tool paths point to a fixed convention under resources/ (see
+# README.md > "Database setup"). They work as-is once resources/ is
+# populated — no local override needed for them in the common case.
+#
+# config/config.local.yaml (NOT tracked by git) is reserved for genuinely
+# machine-specific settings only: dedicated scratch space, thread/memory
+# tuning. See config/config.local.yaml.example.
+#
+# Usage:
+#   snakemake --configfile config/config.yaml -n
+#   snakemake --configfile config/config.yaml config/config.local.yaml -n
+# =============================================================================
+
+# -----------------------------------------------------------------------------
+# MODULES (optional toggles — not yet wired into the Snakefile)
+# -----------------------------------------------------------------------------
 #modules:
-#  assembly: true # 
-#  amr_arg: true # 
-#  build_consensus: false # Perform a subsampling before tree (dafault: false)
+#  assembly: true
+#  amr_arg: true
+#  build_consensus: false  # Perform subsampling before tree building (default: false)
 
-
-# MY ENVS
+# -----------------------------------------------------------------------------
+# CONDA ENVIRONMENTS
+# -----------------------------------------------------------------------------
 envs:
-  abricate: "envs/abricate.yaml" # Abricate env
-  kraken2: "envs/kraken2.yaml" # Kraken2 env
-  nanoplot: "envs/nanoplot.yaml" # NanoPlot env
-  porechop: "envs/porechop.yaml" # Porechop env
-  medaka: "envs/medaka.yaml" # Medaka env
-  minimap2: "envs/minimap2.yaml" # Minimap2 env
-  flye: "envs/flye.yaml" # Flye env
-  bcftools: "envs/bcftools.yaml" # BCFtools env
-  python_plot: "envs/python_plot.yaml" # Python env
-  bracken: "envs/bracken.yaml" # Bracken env
-  host_depletion: "envs/host_depletion.yaml" # Host depletion env
+  kraken2: "envs/kraken2.yaml"
+  nanoplot: "envs/nanoplot.yaml"
+  fastplong: "envs/fastplong.yaml"
+  medaka: "envs/medaka.yaml"
+  minimap2: "envs/minimap2.yaml"
+  flye: "envs/flye.yaml"
+  bracken: "envs/bracken.yaml"
+  host_depletion: "envs/host_depletion.yaml"
   rgi: "envs/rgi.yaml"
-  dag: "envs/dag.yaml"
-  multiqc: "envs/multiqc.yaml"
+  rgi_preprocessing: "envs/rgi_preprocessing.yaml"
   python_filter: "envs/python_filter.yaml"
   taxo_analysis: "envs/taxo_analysis.yaml"
   r_analysis: "envs/r_analysis.yaml"
+  r_diversity: "envs/r_diversity.yaml"
   python_viz: "envs/python_viz.yaml"
-  plasmidfinder: "envs/plasmidfinder.yaml" 
-# MY SAMPLES
-samples_id: # choose samples to run the pipeline, available options
- # - HSE_4
- # - HSE_6
- # - HSE_2
- # - HSE_5
-  #- EPU02A
-  #- EPU03A
-  #- HI01A
-  #- HI02A
-  #- HI03A
-  #- HI04A
-  #- HI05A
-  #- HI06A
-  #- HI07A 
-  #- HI08A
-  #- HI09B
-  #- HI12B
-  #- HI14B
-  #- HI15B
-  #- HI16B
-  #- HI17B
-  #- HI20B
-  #- HI22B
-  - H3_R
-  - H4_R
-  - H2_R
-  - H1_R
-  - H2_D
-  - H4_D
-  - H3_D
-  - C1
-  - C2
-  - C3
-  - C4
-  - C5
-  - C6
-  - C7
-  - C8
+  plasmidfinder: "envs/plasmidfinder.yaml"
+  mobileog: "envs/mobileog.yaml"
+  # NOTE: registry reconciled 2026-08 against workflow/envs/ on disk.
+  # Removed: abricate, bcftools, dag, multiqc, porechop, python_plot
+  # (dead — no corresponding rule/file ever existed).
 
-######################################
-# GLOBAL RESOURCES 
-###################
+# -----------------------------------------------------------------------------
+# SAMPLES
+# -----------------------------------------------------------------------------
+# List the sample IDs to include in this pipeline run.
+samples_id:
+  - test_1
+  - test_2
+
+# -----------------------------------------------------------------------------
+# GLOBAL RESOURCES
+# -----------------------------------------------------------------------------
 resources:
   threads: 40
-  memory: 180000  # Garde une petite marge sur tes 190 Go
-  tmp_dir: "/data/armel/tmp"
+  memory: 180000        # MB — keep a safety margin below total available RAM
+  tmp_dir: "results/tmp" # Relative by default; override in config.local.yaml
+                          # if you need a dedicated scratch/tmp filesystem
 
+# -----------------------------------------------------------------------------
+# HOST DEPLETION
+# -----------------------------------------------------------------------------
+# Prebuilt Minimap2 index (.mmi) of the human reference genome, used to
+# remove host reads before assembly/taxonomy/AMR analysis.
+host_genome: "resources/references/GRCh38_no_alt.mmi"
 
+# -----------------------------------------------------------------------------
+# DATABASE PATHS
+# -----------------------------------------------------------------------------
+kraken_db: "resources/db/kraken2_standard"
 
-
-# --- Chemins des bases de données ---
-kraken_db: "/data/armel/mythesis-data/db/my_k2_db"
-
-# --- Kraaken2 Params ---
+# --- Kraken2 parameters ---
 kraken_threads: 32
 kraken_confidence: 0.1
 
-# --- Bracken Params ---
+# --- Bracken parameters ---
+bracken_read_len: 3000   # 1000, 1500, 2500, 3000 : choose the appropriate distribution per sample
+bracken_level: "S, G, F, P"  # S=Species, G=Genus, F=Family, P=Phylum
 
-bracken_read_len: 3000 # 1000 2500 3000 1500
-bracken_level: "S, G, F, P"  # S=Espèce, G=Genre, F=Famille
-
-# Paramètres RGI
+# -----------------------------------------------------------------------------
+# RGI (Resistance Gene Identifier / CARD) — assembly-based
+# -----------------------------------------------------------------------------
 rgi:
   min_identity: 80
   min_coverage: 80
@@ -110,6 +110,7 @@ rgi:
     - "amr_gene_family"
     - "model_type"
 
+# RGI BWT — read-based
 rgi_bwt:
   min_identity: 80
   min_coverage: 80
@@ -126,33 +127,30 @@ rgi_bwt:
     - "drug_class"
     - "resistance_mechanism"
     - "amr_gene_family"
-    - "reference_model_type"        # équivalent de model_type
+    - "reference_model_type"   # equivalent to model_type in RGI main
 
-   
-# Paramètres de filtrage taxonomique
-
-min_reads_per_taxon: 50      # Minimum 50 reads au total
-min_samples_present: 2        # Présent dans au moins 2 échantillons
-min_relative_abundance: 0.001 # Minimum 0.1% dans au moins un échantillon
+# -----------------------------------------------------------------------------
+# TAXONOMIC FILTERING
+# -----------------------------------------------------------------------------
+min_reads_per_taxon: 50        # Minimum total reads across all samples
+min_samples_present: 2         # Present in at least 2 samples
+min_relative_abundance: 0.001  # At least 0.1% relative abundance in >=1 sample
 
 bracken_threshold: 10
 
+# --- Independent filtering (for heterogeneous sample sets) ---
+# A taxon is retained if it satisfies these criteria in AT LEAST 1 sample.
+min_reads_per_sample: 50              # >=50 reads in >=1 sample
+min_rel_abundance_per_sample: 0.001   # >=0.1% in >=1 sample
+min_samples_independent: 1            # Accept robust singletons
+absolute_min_total_reads: 10          # Remove absolute noise (<10 reads overall)
 
-# ============================================================================
-# FILTRAGE INDÉPENDANT (échantillons hétérogènes)
-# ============================================================================
+# Filtering strategy: "standard", "independent", or "both"
+filtering_strategy: "independent"
 
-# Un taxon est conservé s'il satisfait ces critères dans AU MOINS 1 échantillon
-
-min_reads_per_sample: 50              # ≥50 reads dans ≥1 échantillon
-min_rel_abundance_per_sample: 0.001   # ≥0.1% dans ≥1 échantillon
-min_samples_independent: 1            # Accepter singletons robustes
-absolute_min_total_reads: 10          # Éliminer bruit absolu (<10 reads partout)
-
-#STRATEGIE DE FILTRATION
-filtering_strategy: "independent"   # "standard", "independent", ou "both"
-
-# Figure settings
+# -----------------------------------------------------------------------------
+# FIGURE SETTINGS
+# -----------------------------------------------------------------------------
 fig_dpi: 300
 fig_top_genera: 15
 fig_top_species: 20
@@ -167,30 +165,29 @@ priority_pathogens:
   - "Acinetobacter baumannii"
   - "Enterococcus faecium"
 
-
+# -----------------------------------------------------------------------------
+# mobileOG-db (Mobile Genetic Elements)
+# -----------------------------------------------------------------------------
 mobileog:
-  db: "/data/armel/mythesis-data/db/mobileOG-db/mobileOG-db-beatrix-1.6.dmnd"
-  metadata: "/data/armel/mythesis-data/db/mobileOG-db/mobileOG-db-beatrix-1.6-All.csv"
-  kyanite_py: "/data/armel/mythesis-data/db/mobileOG-db/mobileOG-pl/mobileOGs-pl-kyanite.py"
+  db: "resources/db/mobileOG-db/mobileOG-db-beatrix-1.6.dmnd"
+  metadata: "resources/db/mobileOG-db/mobileOG-db-beatrix-1.6-All.csv"
+  kyanite_py: "resources/tools/mobileOG-pl/mobileOGs-pl-kyanite.py"
   k: 15
   evalue: 1e-20
   min_identity: 90
   min_coverage: 90
 
-
+# -----------------------------------------------------------------------------
+# MEDAKA (polishing)
+# -----------------------------------------------------------------------------
 medaka_model: "r1041_e82_400bps_hac_v5.2.0"
 
-
-# ─── PlasmidFinder ────────────────────────────────────────────────────────────
-
-
+# -----------------------------------------------------------------------------
+# PlasmidFinder
+# -----------------------------------------------------------------------------
 plasmidfinder:
-  db: "/data/armel/mythesis-data/db/plasmidfinder_db"
+  db: "resources/db/plasmidfinder_db"
   databases: "enterobacteriales,Inc18,NT_Rep,Rep1,Rep2,Rep3,RepA_N,RepL,Rep_trans"
   method_path: "blastn"
   min_cov: 0.60
   threshold: 0.95
-
-icefinder2:
-  install_dir: "/data/armel/mythesis-data/tools/icefinder2"
-  mode: "Metagenome"

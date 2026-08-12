@@ -1,15 +1,14 @@
 rule mge_detection:
     """Run mobileOG-pl pipeline on assembled contigs."""
     input:
-        fastq = "results/{sample}/clean/{sample}_noh.fq.gz",
-#        assembly = "results/{sample}/assembly.fasta",
+        assembly = "results/{sample}/assembly.fasta",
         db       = config["mobileog"]["db"],
         metadata = config["mobileog"]["metadata"]
     output:
-        summary  = "results/{sample}/mge/{sample}.fastq.summary.csv",
-        hits     = "results/{sample}/mge/{sample}.fastq.mobileOG.Alignment.Out.csv",
-        tsv      = "results/{sample}/mge/{sample}.fastq.tsv",
-        proteins = "results/{sample}/mge/{sample}.fastq.faa"
+        summary  = "results/{sample}/mge/assembly.fasta.summary.csv",
+        hits     = "results/{sample}/mge/assembly.fasta.mobileOG.Alignment.Out.csv",
+        tsv      = "results/{sample}/mge/assembly.fasta.tsv",
+        proteins = "results/{sample}/mge/assembly.fasta.faa"
     params:
         k       = config["mobileog"]["k"],
         evalue  = config["mobileog"]["evalue"],
@@ -26,7 +25,7 @@ rule mge_detection:
     shell:
         """
         bash {params.wrapper} \
-            -i {input.fastq} \
+            -i {input.assembly} \
             -d {input.db} \
             -m {input.metadata} \
             -k {params.k} \
@@ -43,7 +42,7 @@ rule mge_aggregate:
     """Aggregate MGE summary files across all samples."""
     input:
         summaries = expand(
-            "results/{sample}/mge/{sample}.fastq.summary.csv",
+            "results/{sample}/mge/assembly.fasta.summary.csv",
             sample=config["samples_id"]
         )
     output:
@@ -113,7 +112,7 @@ rule mge_r_analysis:
     """Matrices R MGE — hits filtrés, normalisation, Pident, présence/absence."""
     input:
         hits_files = expand(
-            "results/{sample}/mge/{sample}.fastq.mobileOG.Alignment.Out.csv",
+            "results/{sample}/mge/assembly.fasta.mobileOG.Alignment.Out.csv",
             sample=config["samples_id"]
         ),
         stats = "results/stats/sequencing_stats.tsv",
@@ -150,5 +149,4 @@ rule mge_report:
         "logs/figures/mge_report.log"
     script:
         "../scripts/plot_mge_report.py"
-
 

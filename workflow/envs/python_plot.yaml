@@ -1,9 +1,0 @@
-name: python_plot
-channels:
-  - conda-forge
-  - bioconda
-  - defaults
-dependencies:
-  - matplotlib
-  - pandas
-  - seaborn

@@ -1,7 +1,7 @@
 rule host_depletion:
     input:
         reads   = "results/{sample}/fastplong/fp_trimmed.fastq.gz",
-        host_ref = ancient("resources/references/GRCh38_no_alt.mmi")
+        host_ref = ancient(config["host_genome"])
     output:
         clean_reads = "results/{sample}/clean/{sample}_noh.fq.gz"
     log:

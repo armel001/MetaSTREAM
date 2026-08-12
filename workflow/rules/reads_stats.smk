@@ -1,6 +1,6 @@
 rule reads_stats_raw:
     input:
-        raw = "/data/armel/mythesis-data/data/{sample}.fastq.gz"
+        raw = "resources/reads/{sample}.fastq.gz"
     output:
         stats = "results/{sample}/stats/reads_stats_raw.txt"
     log:

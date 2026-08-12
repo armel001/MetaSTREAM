@@ -3,11 +3,6 @@
 ##################################################
 configfile: "config/config.yaml"
 
-resources_dict = {
-    "mem_mb": 188000,
-    "disk_mb": 2000000
-}
-
 ##################################################
 # RESOURCES
 ##################################################
@@ -24,10 +19,7 @@ wildcard_constraints:
 ##################################################
 # ENVIRONMENT
 ##################################################
-ABRICATE     = config["envs"]["abricate"]
 FLYE         = config["envs"]["flye"]
-PORECHOP     = config["envs"]["porechop"]
-PLOT         = config["envs"]["python_plot"]
 KRAKEN2      = config["envs"]["kraken2"]
 NANOPLOT     = config["envs"]["nanoplot"]
 BRACKEN      = config["envs"]["bracken"]
@@ -41,55 +33,50 @@ PLASMIDFINDER = config["envs"]["plasmidfinder"]
 ##################################################
 # PARAMS
 ##################################################
-SAMPLES, = glob_wildcards("resources/reads/{sample_id}.fastq.gz")
 TAXONOMIC_LEVELS = ["S", "G", "F", "P"]
 
 ##################################################
 # INCLUDES
 ##################################################
 
-# Pré-traitement & QC
+# Preprocessing & QC
 include: "rules/fastplong.smk"
 include: "rules/nanoplot.smk"
 include: "rules/host_depletion.smk"
 include: "rules/rename_reads.smk"
 include: "rules/extract_read_stats.smk"
 
-# Assemblage
+# Assembly
 include: "rules/flye_assembly.smk"
 
-# Annotation AMR  — NB: rgi_filter/select/aggregate remplacés par rgi_preprocess
+# AMR annotation — NB: rgi_filter/select/aggregate superseded by rgi_preprocess
 include: "rules/rgi.smk"
 include: "rules/rgi_bwt.smk"
-include: "rules/rgi_preprocess.smk"   # factorise filter + select + aggregate
+include: "rules/rgi_preprocess.smk"   # factorises filter + select + aggregate
 include: "rules/rgi_compare.smk"
 include: "rules/r_analysis.smk"
 
 # Stats
 include: "rules/reads_stats.smk"
 
-# Taxonomie
+# Taxonomy
 include: "rules/kraken2.smk"
 include: "rules/bracken.smk"
 include: "rules/taxonomy.smk"
 
-# Visualisation
+# Visualization
 include: "rules/python_visualization.smk"
 
 # Mobile Genetic Elements
-
 include: "rules/mge.smk"
 
-# co-occurence 
-
+# ARG x MGE co-occurrence
 include: "rules/cooccurrence.smk"
 
-# medaka 
-
+# Medaka polishing
 include: "rules/medaka.smk"
 
-# Plasmid Finder 
-
+# Plasmid Finder
 include: "rules/plasmidfinder.smk"
 
 
@@ -155,7 +142,7 @@ include: "rules/taxonomy_figures.smk"
 # ─── QC module ────────────────────────────────────────────────────────────────
 
 rule quality_control:
-    """QC + stats de séquençage + clean reads."""
+    """QC, sequencing statistics, and cleaned reads."""
     input:
         expand("results/{sample}/qc/{sample}_Nanoplot/NanoPlot-report.html",
                sample=config["samples_id"]),
@@ -169,7 +156,7 @@ rule quality_control:
 # ─── Taxonomy modules ─────────────────────────────────────────────────────────
 
 rule taxonomy_kraken:
-    """Kraken2 + Bracken + matrices d'abondance brutes."""
+    """Kraken2 + Bracken + raw abundance matrices."""
     input:
         rules.quality_control.input,
         expand("results/{sample}/kraken/{sample}_output.txt",
@@ -181,7 +168,7 @@ rule taxonomy_kraken:
 
 
 rule taxonomy_analysis:
-    """Filtrage, normalisation, diversité alpha, summaries."""
+    """Filtering, normalization, alpha diversity, summaries."""
     input:
         rules.taxonomy_kraken.input,
         filtering_outputs,
@@ -191,22 +178,22 @@ rule taxonomy_analysis:
 
 
 rule taxonomy_viz:
-    """Rapport HTML de visualisation taxonomique."""
+    """Taxonomic visualization HTML report."""
     input:
         rules.taxonomy_analysis.input,
         "results/figures/taxonomy/taxonomy_report.html",
 
 
 rule taxonomy_all:
-    """Pipeline taxonomique complet : QC → Kraken → Analyse → Rapport HTML."""
+    """Full taxonomy pipeline: QC → Kraken → analysis → HTML report."""
     input:
         rules.taxonomy_viz.input,
 
 
-# ─── RGI — matrices R ─────────────────────────────────────────────────────────
+# ─── RGI — R matrices ──────────────────────────────────────────────────────────
 
 rule r_analysis_rgi:
-    """Matrices R — rgi main (assembly)."""
+    """R matrices — RGI main (assembly-based)."""
     input:
         "results/r_analysis/rgi/arg_counts.tsv",
         "results/r_analysis/rgi/arg_relative.tsv",
@@ -222,7 +209,7 @@ rule r_analysis_rgi:
 
 
 rule r_analysis_bwt:
-    """Matrices R — rgi_bwt (reads)."""
+    """R matrices — RGI BWT (read-based)."""
     input:
         "results/r_analysis/rgi_bwt/arg_counts.tsv",
         "results/r_analysis/rgi_bwt/arg_relative.tsv",
@@ -238,37 +225,37 @@ rule r_analysis_bwt:
 
 
 rule r_analysis_all:
-    """Matrices R pour les deux outils."""
+    """R matrices for both detection strategies."""
     input:
         rules.r_analysis_rgi.input,
         rules.r_analysis_bwt.input,
 
 
-# ─── RGI — visualisation ──────────────────────────────────────────────────────
+# ─── RGI — visualization ───────────────────────────────────────────────────────
 
 rule viz_rgi:
-    """Rapport HTML — rgi main."""
+    """HTML report — RGI main."""
     input:
         "results/figures/rgi/rgi_report.html",
 
 
 rule viz_bwt:
-    """Rapport HTML — rgi_bwt."""
+    """HTML report — RGI BWT."""
     input:
         "results/figures/rgi/rgi_bwt_report.html",
 
 
 rule viz_all:
-    """Rapports HTML pour les deux outils."""
+    """HTML reports for both detection strategies."""
     input:
         rules.viz_rgi.input,
         rules.viz_bwt.input,
 
 
-# ─── RGI — pipelines complets ─────────────────────────────────────────────────
+# ─── RGI — full pipelines ──────────────────────────────────────────────────────
 
 rule rgi_main_all:
-    """Pipeline RGI assembly complet : détection → matrices R → rapport HTML."""
+    """Full RGI assembly-based pipeline: detection → R matrices → HTML report."""
     input:
         expand("results/{sample}/rgi/{sample}.txt",
                sample=config["samples_id"]),
@@ -283,7 +270,7 @@ rule rgi_main_all:
 
 
 rule rgi_bwt_all:
-    """Pipeline RGI BWT complet : détection → matrices R → rapport HTML."""
+    """Full RGI BWT pipeline: detection → R matrices → HTML report."""
     input:
         expand("results/{sample}/rgi_bwt/{sample}.txt",
                sample=config["samples_id"]),
@@ -300,7 +287,7 @@ rule rgi_bwt_all:
 
 
 rule rgi_compare_all:
-    """Comparaison RGI main vs BWT + rapport comparatif."""
+    """RGI main vs BWT comparison + comparative report."""
     input:
         rules.rgi_main_all.input,
         rules.rgi_bwt_all.input,
@@ -308,13 +295,13 @@ rule rgi_compare_all:
         "results/summary/rgi_comparison_report.html",
 
 
-# ─── MGE ──────────────────────────────────────────────────────────────────────
+# ─── MGE ────────────────────────────────────────────────────────────────────────
 
 rule mge_all:
-    """Run complete MGE pipeline : detection → aggregation → R analysis → report."""
+    """Run complete MGE pipeline: detection → aggregation → R analysis → report."""
     input:
         expand(
-            "results/{sample}/mge/{sample}.fastq.summary.csv",
+            "results/{sample}/mge/assembly.fasta.summary.csv",
             sample=config["samples_id"]
         ),
         "results/summary/mge_all_samples.tsv",
@@ -322,10 +309,10 @@ rule mge_all:
         rules.mge_r_analysis.output,
         "results/figures/mge/mge_report.html",
 
-# ─── Medaka ───────────────────────────────────────────────────────────────────
+# ─── Medaka ─────────────────────────────────────────────────────────────────────
 
 rule medaka_all:
-    """Polissage Medaka de tous les assemblages Flye bruts."""
+    """Medaka polishing of all raw Flye assemblies."""
     input:
         expand(
             "results/{sample}/medaka/{sample}_polished.fasta",
@@ -335,15 +322,15 @@ rule medaka_all:
 # ─── Plasmid Finder ───────────────────────────────────────────────────────────
 
 rule plasmidfinder_all:
-    """Typage des réplicons plasmidiques sur tous les assemblages polis."""
+    """Plasmid replicon typing on all polished assemblies."""
     input:
         expand("results/{sample}/plasmidfinder/{sample}_results_tab.tsv", sample=config["samples_id"])
 
 
-# ─── Pipeline global ──────────────────────────────────────────────────────────
+# ─── Full pipeline ──────────────────────────────────────────────────────────────
 
 rule all:
-    """Pipeline complet : taxonomie + Medaka + PlasmidFinder + RGI main + RGI BWT + MGE."""
+    """Full pipeline: taxonomy + Medaka + PlasmidFinder + RGI main + RGI BWT + MGE."""
     input:
         rules.taxonomy_all.input,
         rules.medaka_all.input,
@@ -351,3 +338,4 @@ rule all:
         rules.rgi_compare_all.input,
         rules.mge_all.input,
         rules.cooccurrence_all.input,
+

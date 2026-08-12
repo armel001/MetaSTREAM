@@ -1,0 +1,15 @@
+# =============================================================================
+# MetagenAMR — quick-test configuration override
+# =============================================================================
+# Runs the pipeline on the small bundled dataset in resources/data_test/
+# instead of real samples. Committed (small, non-sensitive, unrelated to
+# the published study).
+#
+# Usage:
+#   cp resources/data_test/*.fastq.gz resources/reads/
+#   snakemake --configfile config/config.yaml config/config.test.yaml \
+#       --use-conda -n
+# =============================================================================
+samples_id:
+  - test_1
+  - test_2

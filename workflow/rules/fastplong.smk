@@ -1,6 +1,6 @@
 rule fastplong:
     input:
-        "/data/armel/mythesis-data/data/{sample}.fastq.gz"
+        "resources/reads/{sample}.fastq.gz"
     output:
         fq   = "results/{sample}/fastplong/fp_trimmed.fastq.gz",
         html = "results/{sample}/fastplong/fastplong.html",
