@@ -113,9 +113,9 @@ This is a technical smoke test (confirms the pipeline runs), not a biological va
 ## Usage
 
 ```bash
-bash run_AMR_pipeline.sh          # complete pipeline
-bash run_AMR_pipeline.sh -t <target>
-bash run_AMR_pipeline.sh -n       # dry-run
+bash run_MetaSTREAM.sh          # complete pipeline
+bash run_MetaSTREAM.sh -t <target>
+bash run_MetaSTREAM.sh -n       # dry-run
 ```
 
 Main targets: `taxonomy_all`, `rgi_main_all`, `rgi_bwt_all`, `mge_all`, `cooccurrence_all`, and `all` (complete pipeline). Run `snakemake --list` for the exhaustive list of rules.
@@ -141,8 +141,8 @@ Per-sample results under `results/{sample}/` (QC, assembly, RGI, MGE hits); pool
 | Role | Name | Affiliation | ORCID |
 |---|---|---|---|
 | Author | Thibaut Armel Chérif Gnimadi | [CERFIG](https://www.cerfig.org) | [0000-0001-5129-2873](https://orcid.org/0000-0001-5129-2873) |
-| Author | Alpha Kabinet Keita | [CERFIG](https://www.cerfig.org) | [0000-0003-4377-341X](https://orcid.org/0000-0003-4377-341X) |
-| Supervisor | Mano Joseph Mathew | [Efrei](https://www.efrei.fr) | [0000-0002-4930-6903](https://orcid.org/0000-0002-4930-6903) |
+| Co-Author | Alpha Kabinet Keita | [CERFIG](https://www.cerfig.org) | [0000-0003-4377-341X](https://orcid.org/0000-0003-4377-341X) |
+| Co-Author | Mano Joseph Mathew | [Efrei](https://www.efrei.fr) | [0000-0002-4930-6903](https://orcid.org/0000-0002-4930-6903) |
 
 Contact: armel.gnimadi@cerfig.org
 

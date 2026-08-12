@@ -6,13 +6,36 @@
 /resources/*
 
 # --- Exceptions: keep directory structure (.gitkeep) and the bundled test set
+!/resources/reads/
+/resources/reads/*
 !/resources/reads/.gitkeep
-!/resources/genomes/host_depletion/.gitkeep
+
+!/resources/references/
+/resources/references/*
+!/resources/references/.gitkeep
+
+!/resources/db/
+!/resources/db/kraken2_standard/
+/resources/db/kraken2_standard/*
 !/resources/db/kraken2_standard/.gitkeep
+
+!/resources/db/card/
+/resources/db/card/*
 !/resources/db/card/.gitkeep
+
+!/resources/db/mobileOG-db/
+/resources/db/mobileOG-db/*
 !/resources/db/mobileOG-db/.gitkeep
+
+!/resources/db/plasmidfinder_db/
+/resources/db/plasmidfinder_db/*
 !/resources/db/plasmidfinder_db/.gitkeep
+
+!/resources/tools/
+!/resources/tools/mobileOG-pl/
+/resources/tools/mobileOG-pl/*
 !/resources/tools/mobileOG-pl/.gitkeep
+
 !/resources/data_test/
 !/resources/data_test/**
 
@@ -70,3 +93,4 @@ tmp/
 *.log
 *.tmp
 *.bak
+resources/db/kraken2_standard
