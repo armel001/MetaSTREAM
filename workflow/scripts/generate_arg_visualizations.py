@@ -895,7 +895,7 @@ html = f"""<!DOCTYPE html>
 
 <header>
   <h1>ARG Analysis Report</h1>
-  <p>MetagenAMR Pipeline — Antibiotic Resistance Genes</p>
+  <p>MetaSTREAM Pipeline — Antibiotic Resistance Genes</p>
   <span class="badge">{tool_label}</span>
   <span class="badge">{report_date}</span>
   <span class="badge">{n_samples} samples</span>

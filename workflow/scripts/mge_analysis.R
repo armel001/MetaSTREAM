@@ -1,7 +1,7 @@
 #!/usr/bin/env Rscript
 # ══════════════════════════════════════════════════════════════════════════════
 # mge_analysis.R — Matrices d'analyse MGE
-# Pipeline MetagenAMR | mobileOG-db beatrix-1.6 | Nanopore shotgun metagenomics
+# Pipeline MetaSTREAM | mobileOG-db beatrix-1.6 | Nanopore shotgun metagenomics
 # ══════════════════════════════════════════════════════════════════════════════
 #
 # Outputs :
@@ -59,7 +59,7 @@ dir.create(outdir, showWarnings = FALSE, recursive = TRUE)
 
 t_start <- Sys.time()
 cat("══════════════════════════════════════════════════════════════════════\n")
-cat("  MGE ANALYSIS — MetagenAMR\n")
+cat("  MGE ANALYSIS — MetaSTREAM\n")
 cat("══════════════════════════════════════════════════════════════════════\n")
 cat(sprintf("  Date       : %s\n", format(Sys.time(), "%Y-%m-%d %H:%M")))
 cat(sprintf("  Samples    : %d fichiers hits\n", length(hits_files)))

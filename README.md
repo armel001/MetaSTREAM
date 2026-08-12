@@ -1,6 +1,6 @@
 <div align="center">
 
-# MetagenAMR
+# MetaSTREAM
 
 **Shotgun Nanopore metagenomics pipeline for antimicrobial resistance surveillance**
 
@@ -10,7 +10,7 @@
 [![Nanopore](https://img.shields.io/badge/Oxford_Nanopore-R10.4-0084C8?style=flat-square)](https://nanoporetech.com)
 [![Status](https://img.shields.io/badge/Status-Active-success?style=flat-square)]()
 
-*Characterization of resistomes, mobilomes, and microbial communities from Oxford Nanopore long-read sequencing data*
+*Characterization of resistomes, mobilomes, and microbial communities from Oxford Nanopore long-read sequencing data — developed for wastewater-based AMR surveillance in Conakry, Guinea*
 
 </div>
 
@@ -27,6 +27,7 @@
 - [Usage](#usage)
 - [Outputs](#outputs)
 - [Related Projects](#related-projects)
+- [Authors](#authors)
 - [Citation](#citation)
 - [License](#license)
 
@@ -34,7 +35,7 @@
 
 ## Overview
 
-MetagenAMR is a reproducible, end-to-end Snakemake pipeline integrating quality control, taxonomic profiling, resistome and mobilome analysis from Oxford Nanopore shotgun metagenomics data. It produces publication-ready figures and structured output matrices suitable for downstream statistical analysis.
+MetaSTREAM is a reproducible, end-to-end Snakemake pipeline integrating quality control, taxonomic profiling, resistome and mobilome analysis from Oxford Nanopore shotgun metagenomics data. It produces publication-ready figures and structured output matrices suitable for downstream statistical analysis.
 
 **Key features:**
 - Long-read aware normalization (copies/Gb using per-sample mean read length)
@@ -74,13 +75,13 @@ conda install -n base -c conda-forge snakemake mamba
 ## Installation
 
 ```bash
-git clone https://github.com/armel001/MetagenAMR.git
-cd MetagenAMR
+git clone https://github.com/armel001/MetaSTREAM.git
+cd MetaSTREAM
 ```
 
 All tool environments are automatically built by Snakemake via `--use-conda` — no manual installation required.
 
-**Databases.** MetagenAMR relies on external reference databases (Kraken2, CARD/RGI, mobileOG-db, PlasmidFinder, a host reference genome) that are not distributed with the repository — they must be downloaded and placed under `resources/` following the layout described in the project documentation. Large databases can be symlinked rather than copied.
+**Databases.** MetaSTREAM relies on external reference databases (Kraken2, CARD/RGI, mobileOG-db, PlasmidFinder, a host reference genome) that are not distributed with the repository — they must be downloaded and placed under `resources/` following the layout described in the project documentation. Large databases can be symlinked rather than copied.
 
 ---
 
@@ -135,11 +136,25 @@ Per-sample results under `results/{sample}/` (QC, assembly, RGI, MGE hits); pool
 
 ---
 
+## Authors
+
+| Role | Name | Affiliation | ORCID |
+|---|---|---|---|
+| Author | Thibaut Armel Chérif Gnimadi | [CERFIG](https://www.cerfig.org) | [0000-0001-5129-2873](https://orcid.org/0000-0001-5129-2873) |
+| Author | Alpha Kabinet Keita | [CERFIG](https://www.cerfig.org) | [0000-0003-4377-341X](https://orcid.org/0000-0003-4377-341X) |
+| Supervisor | Mano Joseph Mathew | [Efrei](https://www.efrei.fr) | [0000-0002-4930-6903](https://orcid.org/0000-0002-4930-6903) |
+
+Contact: armel.gnimadi@cerfig.org
+
+---
+
 ## Citation
 
-If you use MetagenAMR in your research, please cite:
+If you use MetaSTREAM in your research, please cite:
 
-> Gnimadi TAC et al. (2026) Manuscript in preparation.
+> Gnimadi TAC, Keita AK, Mathew MJ, et al. (2026) Manuscript in preparation.
+
+A formal software citation (with DOI) will be available once the first release is archived — see [CITATION.cff](CITATION.cff).
 
 Built on Snakemake, NanoPlot, Minimap2, fastplong, Flye, Kraken2/Bracken, RGI/CARD, DIAMOND + mobileOG-db, and PlasmidFinder — please also cite these dependencies where relevant. Full versions and citations: see project documentation.
 
@@ -152,5 +167,5 @@ MIT License — Copyright (c) 2026 Thibaut Armel Chérif GNIMADI et al. See [LIC
 ---
 
 <div align="center">
-<sub>MetagenAMR · Snakemake · Conda · Nanopore R10.4</sub>
+<sub>MetaSTREAM · Snakemake · Conda · Nanopore R10.4 · CERFIG · Efrei</sub>
 </div>

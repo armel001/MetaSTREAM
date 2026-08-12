@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 plot_cooccurrence_report.py — Rapport HTML co-occurrence ARG × MGE
-Pipeline MetagenAMR
+Pipeline MetaSTREAM
 
 Figures :
   1. Bubble plot  — Top ARGs × MGE category (tous samples agrégés)
@@ -255,7 +255,7 @@ html = f"""<!DOCTYPE html>
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Co-occurrence ARG × MGE — MetagenAMR</title>
+<title>Co-occurrence ARG × MGE — MetaSTREAM</title>
 <style>
   * {{ box-sizing: border-box; margin: 0; padding: 0; }}
   body {{ font-family: 'Segoe UI', Arial, sans-serif; background: #f8fafc;
@@ -299,7 +299,7 @@ html = f"""<!DOCTYPE html>
 
 <div class="header">
   <h1>ARG × MGE Co-occurrence Report</h1>
-  <p>MetagenAMR Pipeline · Contig-level co-localization · mobileOG-db × CARD · {datetime.now().strftime("%Y-%m-%d")}</p>
+  <p>MetaSTREAM Pipeline · Contig-level co-localization · mobileOG-db × CARD · {datetime.now().strftime("%Y-%m-%d")}</p>
 </div>
 
 <div class="container">
@@ -365,7 +365,7 @@ html = f"""<!DOCTYPE html>
 </div>
 
 <div class="footer">
-  MetagenAMR Pipeline · RGI main (CARD) × mobileOG-db beatrix-1.6 ·
+  MetaSTREAM Pipeline · RGI main (CARD) × mobileOG-db beatrix-1.6 ·
   Contig-level co-localization · {datetime.now().strftime("%Y-%m-%d %H:%M")}
 </div>
 

@@ -1,7 +1,7 @@
 #!/usr/bin/env Rscript
 # ══════════════════════════════════════════════════════════════════════════════
 # alpha_diversity.R — Indices de diversité alpha
-# Pipeline MetagenAMR | Bracken taxonomic abundance matrix (niveau paramétrable)
+# Pipeline MetaSTREAM | Bracken taxonomic abundance matrix (niveau paramétrable)
 #
 # Métriques calculées via vegan :
 #   - Observed richness (S)   — calculée après raréfaction à profondeur commune
@@ -41,7 +41,7 @@ if (exists("snakemake")) {
 }
 
 cat("══════════════════════════════════════════════════════════════════════\n")
-cat("  ALPHA DIVERSITY — MetagenAMR\n")
+cat("  ALPHA DIVERSITY — MetaSTREAM\n")
 cat("══════════════════════════════════════════════════════════════════════\n")
 cat(sprintf("  Niveau : %s\n", level))
 cat(sprintf("  Input  : %s\n", input_matrix))

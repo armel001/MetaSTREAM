@@ -28,7 +28,7 @@
 # Usage:
 #   MEDAKA_REMOTE=user@gpu.example.org \
 #   MEDAKA_SSH_KEY=$HOME/.ssh/id_ed25519 \
-#   MEDAKA_REMOTE_DIR=/path/to/MetagenAMR \
+#   MEDAKA_REMOTE_DIR=/path/to/MetaSTREAM \
 #   MEDAKA_ENV_PREFIX=$HOME/envs/medaka-conda \
 #     ./run_medaka.sh H1_R H2_R H3_R
 # =============================================================================

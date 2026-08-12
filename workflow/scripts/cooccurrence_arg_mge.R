@@ -1,7 +1,7 @@
 #!/usr/bin/env Rscript
 # ══════════════════════════════════════════════════════════════════════════════
 # cooccurrence_arg_mge.R — Co-occurrence ARG × MGE au niveau contig
-# Pipeline MetagenAMR
+# Pipeline MetaSTREAM
 #
 # Stratégie :
 #   1. Charger RGI main (assembly) — un ARG par ligne, clé : Contig
@@ -35,7 +35,7 @@ if (exists("snakemake")) {
 }
 
 cat("══════════════════════════════════════════════════════════════════════\n")
-cat("  CO-OCCURRENCE ARG × MGE — MetagenAMR\n")
+cat("  CO-OCCURRENCE ARG × MGE — MetaSTREAM\n")
 cat("══════════════════════════════════════════════════════════════════════\n")
 cat(sprintf("  RGI files : %d\n", length(rgi_files)))
 cat(sprintf("  MGE files : %d\n", length(mge_files)))

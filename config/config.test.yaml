@@ -1,5 +1,5 @@
 # =============================================================================
-# MetagenAMR — quick-test configuration override
+# MetaSTREAM — quick-test configuration override
 # =============================================================================
 # Runs the pipeline on the small bundled dataset in resources/data_test/
 # instead of real samples. Committed (small, non-sensitive, unrelated to

@@ -1,0 +1,32 @@
+cff-version: 1.2.0
+title: "MetaSTREAM: a Snakemake pipeline for resistome, mobilome and taxonomic profiling from Oxford Nanopore metagenomic sequencing"
+version: 1.0.0
+license: "MIT"
+type: software
+message: "If you use this software, please cite it as below."
+abstract: "MetaSTREAM is a reproducible Snakemake pipeline integrating quality control, taxonomic profiling, resistome (RGI/CARD) and mobilome (mobileOG-db) analysis, and contig-level ARG x MGE co-localization from Oxford Nanopore shotgun metagenomic sequencing data. Developed for wastewater-based antimicrobial resistance surveillance in Conakry, Guinea."
+authors:
+  - given-names: Thibaut Armel Chérif
+    family-names: Gnimadi
+    affiliation: "Centre de Recherche et de Formation en Infectiologie de Guinée (CERFIG)"
+    orcid: "https://orcid.org/0000-0001-5129-2873"
+    email: armel.gnimadi@cerfig.org
+  - given-names: Alpha Kabinet
+    family-names: Keita
+    affiliation: "Centre de Recherche et de Formation en Infectiologie de Guinée (CERFIG)"
+    orcid: "https://orcid.org/0000-0003-4377-341X"
+    email: alpha-kabinet.keita@cerfig.org
+  - given-names: Mano Joseph
+    family-names: Mathew
+    affiliation: "Efrei"
+    orcid: "https://orcid.org/0000-0002-4930-6903"
+    email: mano.mathew@efrei.fr
+keywords:
+  - antimicrobial resistance
+  - metagenomics
+  - Oxford Nanopore
+  - Snakemake
+  - wastewater surveillance
+  - resistome
+  - mobilome
+
