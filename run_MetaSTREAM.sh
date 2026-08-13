@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 # AMR Pipeline for Metagenomic Analysis
 # Author       : Thibaut Armel Chérif GNIMADI
 # Affiliation  : CERFIG
@@ -29,54 +30,54 @@ Available targets:
 
   ── Taxonomy ──────────────────────────────────────────────────────────────────
   quality_control     QC (NanoPlot) + stats + clean reads
-  taxonomy_kraken     + Kraken2 + Bracken + matrices d'abondance
-  taxonomy_analysis   + filtrage, normalisation, diversité alpha, summaries
-  taxonomy_viz        + rapport HTML taxonomique
-  taxonomy_all        Pipeline taxonomique complet (= all sans RGI)
+  taxonomy_kraken     + Kraken2 + Bracken + abundance matrices
+  taxonomy_analysis   + filtering, normalization, alpha diversity, summaries
+  taxonomy_viz        + taxonomic HTML report
+  taxonomy_all        Complete taxonomy pipeline (= all without RGI)
 
   ── Medaka ─────────────────────────────────────────────────────────────────────
-  medaka_all          Polissage Medaka de tous les assemblages Flye bruts
+  medaka_all          Medaka polishing of all raw Flye assemblies
 
   ── PlasmidFinder ─────────────────────────────────────────────────────────────
-  plasmidfinder_all   Typage des réplicons plasmidiques (Inc groups) sur les
-                       assemblages polis Medaka (dépend de medaka_all)
+  plasmidfinder_all   Plasmid replicon typing (Inc groups) on Medaka-polished
+                       assemblies (depends on medaka_all)
 
-  ── Pipeline global ───────────────────────────────────────────────────────────
-  all                 Tout : taxonomie + Medaka + PlasmidFinder + RGI main
+  ── Full pipeline ─────────────────────────────────────────────────────────────
+  all                 Everything: taxonomy + Medaka + PlasmidFinder + RGI main
                        + RGI BWT + MGE
 
-  ── RGI — analyse R (matrices) ────────────────────────────────────────────────
-  r_analysis_rgi      Matrices R — rgi main (assembly)
-  r_analysis_bwt      Matrices R — rgi_bwt (reads)
-  r_analysis_all      Matrices R — les deux outils
+  ── RGI — R analysis (matrices) ───────────────────────────────────────────────
+  r_analysis_rgi      R matrices — RGI main (assembly)
+  r_analysis_bwt      R matrices — RGI BWT (reads)
+  r_analysis_all      R matrices — both tools
 
-  ── RGI — visualisation ───────────────────────────────────────────────────────
-  viz_rgi             Rapport HTML — rgi main
-  viz_bwt             Rapport HTML — rgi_bwt
-  viz_all             Rapports HTML — les deux outils
+  ── RGI — visualization ───────────────────────────────────────────────────────
+  viz_rgi             HTML report — RGI main
+  viz_bwt             HTML report — RGI BWT
+  viz_all             HTML reports — both tools
 
-  ── RGI — pipelines complets ──────────────────────────────────────────────────
-  rgi_main_all        RGI assembly : détection → matrices R → rapport HTML
-  rgi_bwt_all         RGI reads    : détection → matrices R → rapport HTML
-  rgi_compare_all     RGI main + BWT + rapport comparatif
+  ── RGI — full pipelines ──────────────────────────────────────────────────────
+  rgi_main_all        RGI assembly: detection → R matrices → HTML report
+  rgi_bwt_all         RGI reads: detection → R matrices → HTML report
+  rgi_compare_all     RGI main + BWT + comparative report
 
   ── MGE ───────────────────────────────────────────────────────────────────────
-  mge_all             Détection des éléments génétiques mobiles (mobileOG-db)
-  cooccurrence_all
+  mge_all             Mobile genetic element detection (mobileOG-db)
+  cooccurrence_all    ARG × MGE co-occurrence
 
 Examples:
-  $(basename "$0")                           # Pipeline complet (all)
-  $(basename "$0") -t taxonomy_all           # Taxonomie uniquement
-  $(basename "$0") -t taxonomy_viz           # Juste le rapport HTML taxo
-  $(basename "$0") -t medaka_all             # Polissage Medaka uniquement
-  $(basename "$0") -t plasmidfinder_all      # Typage plasmides uniquement
-  $(basename "$0") -t r_analysis_bwt         # Matrices R BWT uniquement
-  $(basename "$0") -t viz_bwt                # Rapport HTML BWT uniquement
-  $(basename "$0") -t rgi_bwt_all            # Pipeline BWT complet
-  $(basename "$0") -t rgi_compare_all        # RGI main + BWT + comparaison
-  $(basename "$0") -t mge_all                # MGE uniquement
+  $(basename "$0")                           # Complete pipeline (all)
+  $(basename "$0") -t taxonomy_all           # Taxonomy only
+  $(basename "$0") -t taxonomy_viz           # Taxonomy HTML report only
+  $(basename "$0") -t medaka_all             # Medaka polishing only
+  $(basename "$0") -t plasmidfinder_all      # Plasmid typing only
+  $(basename "$0") -t r_analysis_bwt         # BWT R matrices only
+  $(basename "$0") -t viz_bwt                # BWT HTML report only
+  $(basename "$0") -t rgi_bwt_all            # Complete BWT pipeline
+  $(basename "$0") -t rgi_compare_all        # RGI main + BWT + comparison
+  $(basename "$0") -t mge_all                # MGE only
   $(basename "$0") -t rgi_main_all -n        # Dry run RGI main
-  $(basename "$0") -t all -c 32              # Pipeline complet sur 32 cœurs
+  $(basename "$0") -t all -c 32              # Complete pipeline on 32 cores
 EOF
     exit 0
 }
@@ -100,7 +101,6 @@ VALID_TARGETS=(
     "taxonomy_analysis"
     "taxonomy_viz"
     "taxonomy_all"
-    "cooccurrence_all"
     # Medaka
     "medaka_all"
     # PlasmidFinder
@@ -111,7 +111,7 @@ VALID_TARGETS=(
     "r_analysis_rgi"
     "r_analysis_bwt"
     "r_analysis_all"
-    # Visualisation
+    # Visualization
     "viz_rgi"
     "viz_bwt"
     "viz_all"
@@ -121,7 +121,7 @@ VALID_TARGETS=(
     "rgi_compare_all"
     # MGE
     "mge_all"
-    #Co-ocurrence
+    # Co-occurrence
     "cooccurrence_all"
 )
 VALID=false
@@ -153,11 +153,9 @@ snakemake \
     --snakefile "${SNAKEFILE}" \
     --configfile "${CONFIG_FILE}" \
     --cores "${CORES}" \
-    -j 2 \
     --use-conda \
-    --rerun-triggers params \
     ${DRY_RUN} \
-    -- "${TARGET}" 
+    -- "${TARGET}"
 
 echo ""
 echo "======================================"
