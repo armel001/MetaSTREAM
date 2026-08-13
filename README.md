@@ -87,26 +87,24 @@ All tool environments are automatically built by Snakemake via `--use-conda` —
 
 ## Configuration
 
-Pipeline behaviour is controlled by `config/config.yaml` (samples, scientific parameters, database paths). Two optional overlays:
-- `config/config.local.yaml` — machine-specific settings (never committed).
-- `config/config.test.yaml` — runs the pipeline on the small bundled test dataset (see below).
+Pipeline behaviour is controlled by `config/config.yaml` (samples, scientific parameters, database paths). An optional `config/config.test.yaml` overlay runs the pipeline on the small bundled test dataset (see below).
 
 ```bash
-snakemake --configfile config/config.yaml config/config.local.yaml -n
+snakemake --configfile config/config.yaml -n
 ```
 
 ---
 
 ## Quick Test
 
-A small bundled dataset lets you validate the installation end-to-end without real samples:
+A small bundled dataset lets you validate the installation end-to-end. Copy it into place, then run:
 
 ```bash
 cp resources/data_test/*.fastq.gz resources/reads/
 snakemake --configfile config/config.yaml config/config.test.yaml --use-conda -n
 ```
 
-This is a technical smoke test (confirms the pipeline runs), not a biological validation.
+This is a technical smoke test (confirms the pipeline runs), not a biological validation. The bundled reads may not yield a viable assembly (Flye requires genuine read overlap) — this is expected and does not indicate a pipeline error.
 
 ---
 
@@ -116,9 +114,11 @@ This is a technical smoke test (confirms the pipeline runs), not a biological va
 bash run_MetaSTREAM.sh          # complete pipeline
 bash run_MetaSTREAM.sh -t <target>
 bash run_MetaSTREAM.sh -n       # dry-run
+bash run_MetaSTREAM.sh -c 32    # custom core count
+bash run_MetaSTREAM.sh -h       # full help
 ```
 
-Main targets: `taxonomy_all`, `rgi_main_all`, `rgi_bwt_all`, `mge_all`, `cooccurrence_all`, and `all` (complete pipeline). Run `snakemake --list` for the exhaustive list of rules.
+Main targets: `taxonomy_all`, `medaka_all`, `plasmidfinder_all`, `rgi_main_all`, `rgi_bwt_all`, `rgi_compare_all`, `mge_all`, `cooccurrence_all`, and `all` (complete pipeline). Run `bash run_MetaSTREAM.sh --help` for the full, module-organized list of targets.
 
 **Note on Medaka polishing:** requires a GPU. If unavailable locally, polishing can be run on a remote GPU server and results copied back into `results/{sample}/medaka/` — see project documentation.
 
@@ -141,8 +141,8 @@ Per-sample results under `results/{sample}/` (QC, assembly, RGI, MGE hits); pool
 | Role | Name | Affiliation | ORCID |
 |---|---|---|---|
 | Author | Thibaut Armel Chérif Gnimadi | [CERFIG](https://www.cerfig.org) | [0000-0001-5129-2873](https://orcid.org/0000-0001-5129-2873) |
-| Co-Author | Alpha Kabinet Keita | [CERFIG](https://www.cerfig.org) | [0000-0003-4377-341X](https://orcid.org/0000-0003-4377-341X) |
-| Co-Author | Mano Joseph Mathew | [Efrei](https://www.efrei.fr) | [0000-0002-4930-6903](https://orcid.org/0000-0002-4930-6903) |
+| Supervisor | Alpha Kabinet Keita | [CERFIG](https://www.cerfig.org) | [0000-0003-4377-341X](https://orcid.org/0000-0003-4377-341X) |
+| Supervisor | Mano Joseph Mathew | [Efrei](https://www.efrei.fr) | [0000-0002-4930-6903](https://orcid.org/0000-0002-4930-6903) |
 
 Contact: armel.gnimadi@cerfig.org
 
