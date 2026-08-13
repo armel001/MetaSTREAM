@@ -1,6 +1,6 @@
 rule rgi:
     input:
-        assembly = "results/{sample}/assembly.fasta"
+        assembly = "results/{sample}/medaka/{sample}_polished.fasta"
     output:
         txt = "results/{sample}/rgi/{sample}.txt",
         json = "results/{sample}/rgi/{sample}.json",
@@ -22,5 +22,5 @@ rule rgi:
             --num_threads {threads} \
             --local \
             --clean
-
         """
+

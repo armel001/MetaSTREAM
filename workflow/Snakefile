@@ -136,7 +136,7 @@ include: "rules/taxonomy_figures.smk"
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
-# TARGET RULES — MetaSTREAM pipeline
+# TARGET RULES — MetagenAMR pipeline
 # ═══════════════════════════════════════════════════════════════════════════════
 
 # ─── QC module ────────────────────────────────────────────────────────────────
@@ -301,7 +301,7 @@ rule mge_all:
     """Run complete MGE pipeline: detection → aggregation → R analysis → report."""
     input:
         expand(
-            "results/{sample}/mge/assembly.fasta.summary.csv",
+            "results/{sample}/mge/{sample}_polished.fasta.summary.csv",
             sample=config["samples_id"]
         ),
         "results/summary/mge_all_samples.tsv",

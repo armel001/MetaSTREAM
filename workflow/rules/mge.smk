@@ -1,14 +1,14 @@
 rule mge_detection:
     """Run mobileOG-pl pipeline on assembled contigs."""
     input:
-        assembly = "results/{sample}/assembly.fasta",
+        assembly = "results/{sample}/medaka/{sample}_polished.fasta",
         db       = config["mobileog"]["db"],
         metadata = config["mobileog"]["metadata"]
     output:
-        summary  = "results/{sample}/mge/assembly.fasta.summary.csv",
-        hits     = "results/{sample}/mge/assembly.fasta.mobileOG.Alignment.Out.csv",
-        tsv      = "results/{sample}/mge/assembly.fasta.tsv",
-        proteins = "results/{sample}/mge/assembly.fasta.faa"
+        summary  = "results/{sample}/mge/{sample}_polished.fasta.summary.csv",
+        hits     = "results/{sample}/mge/{sample}_polished.fasta.mobileOG.Alignment.Out.csv",
+        tsv      = "results/{sample}/mge/{sample}_polished.fasta.tsv",
+        proteins = "results/{sample}/mge/{sample}_polished.fasta.faa"
     params:
         k       = config["mobileog"]["k"],
         evalue  = config["mobileog"]["evalue"],
@@ -42,7 +42,7 @@ rule mge_aggregate:
     """Aggregate MGE summary files across all samples."""
     input:
         summaries = expand(
-            "results/{sample}/mge/assembly.fasta.summary.csv",
+            "results/{sample}/mge/{sample}_polished.fasta.summary.csv",
             sample=config["samples_id"]
         )
     output:
@@ -112,7 +112,7 @@ rule mge_r_analysis:
     """Matrices R MGE — hits filtrés, normalisation, Pident, présence/absence."""
     input:
         hits_files = expand(
-            "results/{sample}/mge/assembly.fasta.mobileOG.Alignment.Out.csv",
+            "results/{sample}/mge/{sample}_polished.fasta.mobileOG.Alignment.Out.csv",
             sample=config["samples_id"]
         ),
         stats = "results/stats/sequencing_stats.tsv",

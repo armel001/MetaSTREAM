@@ -1,18 +1,18 @@
 # ══════════════════════════════════════════════════════════════════════════════
-# Co-occurrence ARG × MGE — jointure contig-level
+# ARG × MGE co-occurrence — contig-level join
 # RGI main (assembly) × mobileOG-db
 # ══════════════════════════════════════════════════════════════════════════════
 
 rule cooccurrence_arg_mge:
     """
-    Détection des co-occurrences ARG × MGE au niveau contig.
-    Jointure : RGI main (Contig) × mobileOG (Specific Contig).
-    Outputs : paires, résumé drug_class × MGE, edge list réseau, stats/sample.
+    Detect ARG × MGE co-occurrence at the contig level.
+    Join: RGI main (Contig) × mobileOG (Specific Contig).
+    Outputs: pairs, drug_class × MGE summary, network edge list, per-sample stats.
     """
     input:
         rgi_files = expand("results/{sample}/rgi/{sample}.txt",
                            sample=config["samples_id"]),
-        mge_files = expand("results/{sample}/mge/assembly.fasta.mobileOG.Alignment.Out.csv",
+        mge_files = expand("results/{sample}/mge/{sample}_polished.fasta.mobileOG.Alignment.Out.csv",
                            sample=config["samples_id"]),
     output:
         pairs   = "results/r_analysis/cooccurrence/01_cooccurrence_pairs.tsv",
@@ -28,7 +28,7 @@ rule cooccurrence_arg_mge:
 
 
 rule cooccurrence_report:
-    """Rapport HTML co-occurrence ARG × MGE."""
+    """ARG × MGE co-occurrence HTML report."""
     input:
         pairs   = "results/r_analysis/cooccurrence/01_cooccurrence_pairs.tsv",
         network = "results/r_analysis/cooccurrence/03_cooccurrence_network.tsv",
@@ -45,9 +45,8 @@ rule cooccurrence_report:
 
 
 rule cooccurrence_all:
-    """Target rule — co-occurrence ARG × MGE complète."""
+    """Target rule — complete ARG × MGE co-occurrence module."""
     input:
         rules.cooccurrence_arg_mge.output,
         rules.cooccurrence_report.output,
-
 
