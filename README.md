@@ -3,7 +3,7 @@
 # MetaSTREAM
 
 **Shotgun Nanopore metagenomics pipeline for antimicrobial resistance surveillance**
-
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.21921166.svg)](https://doi.org/10.5281/zenodo.21921166)
 [![Snakemake](https://img.shields.io/badge/Snakemake-≥7.0-brightgreen?style=flat-square&logo=python)](https://snakemake.readthedocs.io)
 [![Conda](https://img.shields.io/badge/Conda-supported-44A833?style=flat-square&logo=anaconda)](https://docs.conda.io)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue?style=flat-square)](LICENSE)
