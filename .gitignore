@@ -4,13 +4,13 @@
 /results/*
 /documentation/*
 /resources/*
-/workflow/scripts/generate_arg_visualizations.py
-/workflow/scripts/plot_cooccurrence_report.py
-/workflow/scripts/plot_mge_report.py
-/workflow/scripts/plot_taxonomy_report.py
-/workflow/scripts/gene_review.py
-/workflow/scripts/compare_rgi_methods.py
-/workflow/scripts/cooccurrence_arg_mge.R
+workflow/scripts/generate_arg_visualizations.py
+workflow/scripts/plot_cooccurrence_report.py
+workflow/scripts/plot_mge_report.py
+workflow/scripts/plot_taxonomy_report.py
+workflow/scripts/gene_review.py
+workflow/scripts/compare_rgi_methods.py
+workflow/scripts/cooccurrence_arg_mge.R
 
 # --- Exceptions: keep directory structure (.gitkeep) and the bundled test set
 !/resources/reads/
