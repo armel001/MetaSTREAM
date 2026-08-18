@@ -56,9 +56,8 @@ envs:
 # -----------------------------------------------------------------------------
 # List the sample IDs to include in this pipeline run.
 samples_id:
-  - test_1
-  - test_2
-
+  - EPU03A
+  - EPU02A
 # -----------------------------------------------------------------------------
 # GLOBAL RESOURCES
 # -----------------------------------------------------------------------------
@@ -146,24 +145,26 @@ min_samples_independent: 1            # Accept robust singletons
 absolute_min_total_reads: 10          # Remove absolute noise (<10 reads overall)
 
 # Filtering strategy: "standard", "independent", or "both"
+# Filtering strategy depend on whether samples were collected independently or not
+
 filtering_strategy: "independent"
 
 # -----------------------------------------------------------------------------
 # FIGURE SETTINGS
 # -----------------------------------------------------------------------------
-fig_dpi: 300
-fig_top_genera: 15
-fig_top_species: 20
-fig_heatmap_top_n: 30
+#fig_dpi: 300
+#fig_top_genera: 15
+#fig_top_species: 20
+#fig_heatmap_top_n: 30
 
-priority_pathogens:
-  - "Escherichia coli"
-  - "Klebsiella pneumoniae"
-  - "Pseudomonas aeruginosa"
-  - "Clostridioides difficile"
-  - "Clostridium perfringens"
-  - "Acinetobacter baumannii"
-  - "Enterococcus faecium"
+#priority_pathogens:
+#  - "Escherichia coli"
+#  - "Klebsiella pneumoniae"
+#  - "Pseudomonas aeruginosa"
+#  - "Clostridioides difficile"
+#  - "Clostridium perfringens"
+#  - "Acinetobacter baumannii"
+#  - "Enterococcus faecium"
 
 # -----------------------------------------------------------------------------
 # mobileOG-db (Mobile Genetic Elements)

@@ -1,6 +1,6 @@
 rule rgi:
     input:
-        assembly = "results/{sample}/medaka/{sample}_polished.fasta"
+        assembly = "results/{sample}/assembly.fasta"
     output:
         txt = "results/{sample}/rgi/{sample}.txt",
         json = "results/{sample}/rgi/{sample}.json",

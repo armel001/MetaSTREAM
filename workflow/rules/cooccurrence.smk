@@ -12,7 +12,7 @@ rule cooccurrence_arg_mge:
     input:
         rgi_files = expand("results/{sample}/rgi/{sample}.txt",
                            sample=config["samples_id"]),
-        mge_files = expand("results/{sample}/mge/{sample}_polished.fasta.mobileOG.Alignment.Out.csv",
+        mge_files = expand("results/{sample}/mge/{sample}.assembly.fasta.mobileOG.Alignment.Out.csv",
                            sample=config["samples_id"]),
     output:
         pairs   = "results/r_analysis/cooccurrence/01_cooccurrence_pairs.tsv",
@@ -49,4 +49,3 @@ rule cooccurrence_all:
     input:
         rules.cooccurrence_arg_mge.output,
         rules.cooccurrence_report.output,
-

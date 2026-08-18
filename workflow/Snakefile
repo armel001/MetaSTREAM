@@ -177,17 +177,17 @@ rule taxonomy_analysis:
         summary_output,
 
 
-rule taxonomy_viz:
-    """Taxonomic visualization HTML report."""
-    input:
-        rules.taxonomy_analysis.input,
-        "results/figures/taxonomy/taxonomy_report.html",
+#rule taxonomy_viz:
+#    """Taxonomic visualization HTML report."""
+#    input:
+#        rules.taxonomy_analysis.input,
+#        "results/figures/taxonomy/taxonomy_report.html",
 
 
 rule taxonomy_all:
     """Full taxonomy pipeline: QC → Kraken → analysis → HTML report."""
     input:
-        rules.taxonomy_viz.input,
+        rules.taxonomy_analysis.input,
 
 
 # ─── RGI — R matrices ──────────────────────────────────────────────────────────
@@ -233,23 +233,23 @@ rule r_analysis_all:
 
 # ─── RGI — visualization ───────────────────────────────────────────────────────
 
-rule viz_rgi:
-    """HTML report — RGI main."""
-    input:
-        "results/figures/rgi/rgi_report.html",
+#rule viz_rgi:
+#    """HTML report — RGI main."""
+#    input:
+#        "results/figures/rgi/rgi_report.html",
 
 
-rule viz_bwt:
-    """HTML report — RGI BWT."""
-    input:
-        "results/figures/rgi/rgi_bwt_report.html",
+#rule viz_bwt:
+#    """HTML report — RGI BWT."""
+#    input:
+#        "results/figures/rgi/rgi_bwt_report.html",
 
 
-rule viz_all:
-    """HTML reports for both detection strategies."""
-    input:
-        rules.viz_rgi.input,
-        rules.viz_bwt.input,
+#rule viz_all:
+#    """HTML reports for both detection strategies."""
+#    input:
+#        rules.viz_rgi.input,
+#        rules.viz_bwt.input,
 
 
 # ─── RGI — full pipelines ──────────────────────────────────────────────────────
@@ -266,7 +266,7 @@ rule rgi_main_all:
         "results/summary/rgi_all_samples.tsv",
         "results/summary/rgi_aggr_summary.txt",
         rules.r_analysis_rgi.input,
-        rules.viz_rgi.input,
+ #       rules.viz_rgi.input,
 
 
 rule rgi_bwt_all:
@@ -283,16 +283,16 @@ rule rgi_bwt_all:
         "results/summary/rgi_bwt_all_samples.tsv",
         "results/summary/rgi_bwt_aggr_summary.txt",
         rules.r_analysis_bwt.input,
-        rules.viz_bwt.input,
+  #      rules.viz_bwt.input,
 
 
-rule rgi_compare_all:
-    """RGI main vs BWT comparison + comparative report."""
-    input:
-        rules.rgi_main_all.input,
-        rules.rgi_bwt_all.input,
-        "results/summary/rgi_comparison.tsv",
-        "results/summary/rgi_comparison_report.html",
+# rule rgi_compare_all:
+#    """RGI main vs BWT comparison + comparative report."""
+#    input:
+#        rules.rgi_main_all.input,
+#        rules.rgi_bwt_all.input,
+#        "results/summary/rgi_comparison.tsv",
+#        "results/summary/rgi_comparison_report.html",
 
 
 # ─── MGE ────────────────────────────────────────────────────────────────────────
@@ -301,23 +301,23 @@ rule mge_all:
     """Run complete MGE pipeline: detection → aggregation → R analysis → report."""
     input:
         expand(
-            "results/{sample}/mge/{sample}_polished.fasta.summary.csv",
+            "results/{sample}/mge/{sample}.assembly.fasta.summary.csv",
             sample=config["samples_id"]
         ),
         "results/summary/mge_all_samples.tsv",
         "results/summary/mge_per_sample.tsv",
         rules.mge_r_analysis.output,
-        "results/figures/mge/mge_report.html",
+        # "results/figures/mge/mge_report.html",
 
 # ─── Medaka ─────────────────────────────────────────────────────────────────────
 
-rule medaka_all:
-    """Medaka polishing of all raw Flye assemblies."""
-    input:
-        expand(
-            "results/{sample}/medaka/{sample}_polished.fasta",
-            sample=config["samples_id"]
-        ),
+#rule medaka_all:
+#    """Medaka polishing of all raw Flye assemblies."""
+#    input:
+#        expand(
+#            "results/{sample}/medaka/{sample}_polished.fasta",
+#            sample=config["samples_id"]
+#        ),
 
 # ─── Plasmid Finder ───────────────────────────────────────────────────────────
 
@@ -333,9 +333,7 @@ rule all:
     """Full pipeline: taxonomy + Medaka + PlasmidFinder + RGI main + RGI BWT + MGE."""
     input:
         rules.taxonomy_all.input,
-        rules.medaka_all.input,
-        rules.plasmidfinder_all.input,
-        rules.rgi_compare_all.input,
+#        rules.medaka_all.input, # run it only if you have GPU 
+#        rules.plasmidfinder_all.input, #used polished assembly
         rules.mge_all.input,
-        rules.cooccurrence_all.input,
-
+        rules.rgi_bwt_all.input,

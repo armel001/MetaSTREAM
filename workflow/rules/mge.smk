@@ -1,14 +1,14 @@
 rule mge_detection:
     """Run mobileOG-pl pipeline on assembled contigs."""
     input:
-        assembly = "results/{sample}/medaka/{sample}_polished.fasta",
+        assembly = "results/{sample}/assembly.fasta",
         db       = config["mobileog"]["db"],
         metadata = config["mobileog"]["metadata"]
     output:
-        summary  = "results/{sample}/mge/{sample}_polished.fasta.summary.csv",
-        hits     = "results/{sample}/mge/{sample}_polished.fasta.mobileOG.Alignment.Out.csv",
-        tsv      = "results/{sample}/mge/{sample}_polished.fasta.tsv",
-        proteins = "results/{sample}/mge/{sample}_polished.fasta.faa"
+        summary  = "results/{sample}/mge/{sample}.assembly.fasta.summary.csv",
+        hits     = "results/{sample}/mge/{sample}.assembly.fasta.mobileOG.Alignment.Out.csv",
+        tsv      = "results/{sample}/mge/{sample}.assembly.fasta.tsv",
+        proteins = "results/{sample}/mge/{sample}.assembly.fasta.faa"
     params:
         k       = config["mobileog"]["k"],
         evalue  = config["mobileog"]["evalue"],
@@ -35,14 +35,22 @@ rule mge_detection:
             --outdir {params.outdir} \
             --pypath {params.pypath} \
             > {log} 2>&1
-        """
 
+        mv {params.outdir}/assembly.fasta.faa \
+           {params.outdir}/{wildcards.sample}.assembly.fasta.faa
+        mv {params.outdir}/assembly.fasta.tsv \
+           {params.outdir}/{wildcards.sample}.assembly.fasta.tsv
+        mv {params.outdir}/assembly.fasta.mobileOG.Alignment.Out.csv \
+           {params.outdir}/{wildcards.sample}.assembly.fasta.mobileOG.Alignment.Out.csv
+        mv {params.outdir}/assembly.fasta.summary.csv \
+           {params.outdir}/{wildcards.sample}.assembly.fasta.summary.csv
+        """
 
 rule mge_aggregate:
     """Aggregate MGE summary files across all samples."""
     input:
         summaries = expand(
-            "results/{sample}/mge/{sample}_polished.fasta.summary.csv",
+            "results/{sample}/mge/{sample}.assembly.fasta.summary.csv",
             sample=config["samples_id"]
         )
     output:
@@ -112,7 +120,7 @@ rule mge_r_analysis:
     """Matrices R MGE — hits filtrés, normalisation, Pident, présence/absence."""
     input:
         hits_files = expand(
-            "results/{sample}/mge/{sample}_polished.fasta.mobileOG.Alignment.Out.csv",
+            "results/{sample}/mge/{sample}.assembly.fasta.mobileOG.Alignment.Out.csv",
             sample=config["samples_id"]
         ),
         stats = "results/stats/sequencing_stats.tsv",
@@ -149,4 +157,3 @@ rule mge_report:
         "logs/figures/mge_report.log"
     script:
         "../scripts/plot_mge_report.py"
-

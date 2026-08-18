@@ -95,7 +95,7 @@ def main():
         print(f"  1. Identity ≥ {min_identity}%")
         print(f"     → Removed: {removed:,} | Retained: {len(df_filtered):,}")
 
-    # Filtre 2 : Couverture
+    # Filtre 2 : Coverage
     if col_cov in df.columns:
         before = len(df_filtered)
         if before > 0:
@@ -133,7 +133,7 @@ def main():
     df_filtered.to_csv(output_file, sep='\t', index=False)
     print(f"  ✓ Saved → {output_file} ({output_path.stat().st_size/1024:.2f} KB)")
 
-    # Warning résultat vide
+    # Warning 
     if len(df_filtered) == 0:
         print(f"\n{'!' * 70}")
         print(f"WARNING: No ARGs passed quality filters!")

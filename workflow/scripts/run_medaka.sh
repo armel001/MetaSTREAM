@@ -2,21 +2,8 @@
 # =============================================================================
 # run_medaka.sh — external GPU-server Medaka polishing
 # =============================================================================
-# Medaka polishing requires a GPU; this pipeline's compute node does not have
-# one. This script runs medaka_consensus on a remote GPU server for each
-# sample, pulling assembly.fasta + cleaned reads from the main pipeline
-# server, and pushing the polished consensus back into
-# results/{sample}/medaka/ — the same location workflow/rules/medaka.smk
-# would produce if run locally with GPU access.
-#
-# This script is run MANUALLY, outside the Snakemake DAG. It is not a
-# Snakemake rule and is not invoked automatically by run_AMR_pipeline.sh.
-#
-# NOTE (open methodological question — see project docs): rgi.smk and
-# mge.smk currently detect ARGs/MGEs on the raw Flye assembly
-# (results/{sample}/assembly.fasta), while plasmidfinder.smk uses the
-# Medaka-polished assembly produced here. Whether ARG/MGE detection should
-# also run on the polished assembly for consistency is still open.
+# This script can be run independantly one the pipeline for medaka polishing 
+# if your server don't use GPU
 #
 # Configuration — set as environment variables, or edit the defaults below:
 #   MEDAKA_REMOTE       user@remote-gpu-server
